@@ -4,6 +4,29 @@ import { useRef, FormEvent } from 'react';
 import { SendHorizonal, Loader2, Sparkles, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+const MODEL_OPTIONS = [
+  {
+    value: 'gemini-3.1-pro',
+    label: 'Gemini 3.1 Pro',
+    icon: Sparkles,
+  },
+  {
+    value: 'gemini-2.5-pro',
+    label: 'Gemini 2.5 Pro',
+    icon: Sparkles,
+  },
+  {
+    value: 'gemini-1.5-pro',
+    label: 'Gemini 1.5 Pro',
+    icon: Sparkles,
+  },
+  {
+    value: 'gemini-1.5-flash',
+    label: 'Gemini 1.5 Flash',
+    icon: Zap,
+  },
+];
+
 interface PromptInputProps {
   input: string;
   onInputChange: (value: string) => void;
@@ -53,63 +76,35 @@ export function PromptInput({
       className="relative w-full"
     >
       {hasFile && (
-        <div className="mb-3 flex flex-wrap items-center gap-2 px-1">
-          <button
-            type="button"
-            onClick={() => onModelChange('gemini-3.1-pro')}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-              model === 'gemini-3.1-pro'
-                ? 'bg-violet-500/20 text-violet-300 ring-1 ring-violet-500/30'
-                : 'text-white/40 hover:bg-white/5 hover:text-white/70'
-            }`}
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            Gemini 3.1 Pro
-          </button>
-          <button
-            type="button"
-            onClick={() => onModelChange('gemini-2.5-pro')}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-              model === 'gemini-2.5-pro'
-                ? 'bg-blue-500/20 text-blue-300 ring-1 ring-blue-500/30'
-                : 'text-white/40 hover:bg-white/5 hover:text-white/70'
-            }`}
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            Gemini 2.5 Pro
-          </button>
-          <button
-            type="button"
-            onClick={() => onModelChange('gemini-1.5-pro')}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-              model === 'gemini-1.5-pro'
-                ? 'bg-orange-500/20 text-orange-300 ring-1 ring-orange-500/30'
-                : 'text-white/40 hover:bg-white/5 hover:text-white/70'
-            }`}
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            Gemini 1.5 Pro
-          </button>
-          <button
-            type="button"
-            onClick={() => onModelChange('gemini-1.5-flash')}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-              model === 'gemini-1.5-flash'
-                ? 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/30'
-                : 'text-white/40 hover:bg-white/5 hover:text-white/70'
-            }`}
-          >
-            <Zap className="h-3.5 w-3.5" />
-            Gemini 1.5 Flash
-          </button>
+        <div className="mb-2 flex flex-wrap items-center gap-1 rounded-md border border-[#30363d] bg-[#161b22] p-1">
+          {MODEL_OPTIONS.map((option) => {
+            const Icon = option.icon;
+            const isActive = model === option.value;
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => onModelChange(option.value)}
+                className={`flex items-center gap-1.5 rounded-sm px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                  isActive
+                    ? 'bg-[#1f6feb] text-white'
+                    : 'text-[#8b949e] hover:bg-[#21262d] hover:text-[#e6edf3]'
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {option.label}
+              </button>
+            );
+          })}
         </div>
       )}
 
       <div
-        className={`flex items-end gap-2 rounded-2xl border bg-white/[0.03] p-3 transition-all duration-300 w-full ${
+        className={`flex w-full items-end gap-2 rounded-md border bg-[#161b22] p-2 transition-colors ${
           hasFile
-            ? 'border-white/10 focus-within:border-violet-500/40 focus-within:shadow-lg focus-within:shadow-violet-500/5'
-            : 'border-white/5 opacity-60'
+            ? 'border-[#30363d] focus-within:border-[#2f81f7]'
+            : 'border-[#30363d] opacity-70'
         }`}
       >
         <textarea
@@ -124,7 +119,7 @@ export function PromptInput({
           }
           disabled={disabled || !hasFile}
           rows={1}
-          className="flex-1 resize-none bg-transparent text-sm text-white placeholder-white/30 outline-none disabled:cursor-not-allowed"
+          className="flex-1 resize-none bg-transparent px-1 py-1.5 text-sm text-[#e6edf3] placeholder-[#8b949e] outline-none disabled:cursor-not-allowed"
           style={{ maxHeight: '200px' }}
         />
 
@@ -132,7 +127,7 @@ export function PromptInput({
           type="submit"
           size="icon"
           disabled={disabled || !hasFile || (!input.trim() && !isStreaming)}
-          className="h-9 w-9 shrink-0 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/25 transition-all hover:from-violet-500 hover:to-indigo-500 hover:shadow-violet-500/40 disabled:opacity-30 disabled:shadow-none"
+          className="h-8 w-8 shrink-0 rounded-md border-[#1f6feb] bg-[#238636] text-white hover:bg-[#2ea043] disabled:border-[#30363d] disabled:bg-[#21262d] disabled:text-[#8b949e]"
         >
           {isStreaming ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -143,7 +138,7 @@ export function PromptInput({
       </div>
 
       {!hasFile && (
-        <p className="mt-2 text-center text-xs text-white/25">
+        <p className="mt-2 text-center text-xs text-[#8b949e]">
           Загрузите датасет, чтобы начать анализ
         </p>
       )}

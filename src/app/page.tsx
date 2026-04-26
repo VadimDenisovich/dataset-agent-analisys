@@ -7,7 +7,7 @@ import { AgentTerminal } from '@/components/agent-terminal';
 import { ResultsDashboard } from '@/components/results-dashboard';
 import { ErrorAlert } from '@/components/error-alert';
 import { useAgentStream } from '@/hooks/use-agent-stream';
-import { Sparkles } from 'lucide-react';
+import { Activity, FileSpreadsheet } from 'lucide-react';
 
 export default function HomePage() {
   const {
@@ -31,76 +31,88 @@ export default function HomePage() {
   } = useAgentStream();
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background">
+    <div className="flex h-screen flex-col overflow-hidden bg-[#0d1117] text-[#e6edf3]">
       <Header />
 
-      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col overflow-hidden px-4 py-4 sm:px-6 sm:py-6">
-        <div className={`flex-1 overflow-y-auto no-scrollbar pb-4 flex flex-col ${messages.length === 0 ? 'justify-center' : ''}`}>
-        {/* Hero section — only when idle */}
-        {messages.length === 0 && !isStreaming && (
-          <div className="mb-2 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 ring-1 ring-violet-500/20">
-              <Sparkles className="h-8 w-8 text-violet-400" />
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col overflow-hidden px-3 py-3 sm:px-6 sm:py-5">
+        <div
+          className={`flex flex-1 flex-col overflow-y-auto pb-4 ${
+            messages.length === 0 ? 'justify-center' : ''
+          }`}
+        >
+          {/* Workspace header — only when idle */}
+          {messages.length === 0 && !isStreaming && (
+            <div className="mb-4 border-b border-[#30363d] pb-3">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#30363d] bg-[#161b22]">
+                    <FileSpreadsheet className="h-4 w-4 text-[#2f81f7]" />
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="truncate text-base font-semibold text-[#e6edf3]">
+                      Новый анализ
+                    </h2>
+                    <p className="text-xs text-[#8b949e]">
+                      CSV, XLSX или XLS
+                    </p>
+                  </div>
+                </div>
+                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#2ea04366] bg-[#2386361f] px-2 py-0.5 text-xs font-medium text-[#3fb950]">
+                  <Activity className="h-3 w-3" />
+                  Ready
+                </span>
+              </div>
             </div>
-            <h2 className="text-2xl font-bold tracking-tight text-white">
-              Анализ данных с ИИ
-            </h2>
-            <p className="mt-2 text-sm text-white/40 max-w-md mx-auto">
-              Загрузите CSV или Excel файл, опишите задачу — агент напишет
-              Python-код, выполнит его в облачной песочнице и вернёт отчёт с
-              графиками.
+          )}
+
+          {/* Error Alert */}
+          {error && (
+            <div className="mb-6">
+              <ErrorAlert error={error} rateLimit={rateLimit} onRetry={reload} />
+            </div>
+          )}
+
+          {/* Upload Zone - Only show when no messages */}
+          {messages.length === 0 && (
+            <div className="mb-6">
+              <UploadZone
+                onFileUploaded={uploadFile}
+                uploadedFile={file}
+                isUploading={isUploading}
+                onReset={reset}
+                disabled={isStreaming}
+              />
+            </div>
+          )}
+
+          {/* Agent Terminal */}
+          {(steps.length > 0 || isStreaming) && (
+            <div className="mb-6">
+              <AgentTerminal steps={steps} isStreaming={isStreaming} />
+            </div>
+          )}
+
+          {/* Results Dashboard */}
+          {messages.length > 0 && (
+            <div className="mb-6">
+              <ResultsDashboard
+                messages={messages}
+                charts={charts}
+                isDone={isDone}
+              />
+            </div>
+          )}
+
+          {/* Footer hint */}
+          {isDone && (
+            <p className="pb-4 text-center text-xs text-[#8b949e]">
+              Вы можете задать уточняющий вопрос или загрузить новый файл
             </p>
-          </div>
-        )}
-
-        {/* Error Alert */}
-        {error && (
-          <div className="mb-6">
-            <ErrorAlert error={error} rateLimit={rateLimit} onRetry={reload} />
-          </div>
-        )}
-
-        {/* Upload Zone - Only show when no messages */}
-        {messages.length === 0 && (
-          <div className="mb-6">
-            <UploadZone
-          onFileUploaded={uploadFile}
-          uploadedFile={file}
-          isUploading={isUploading}
-          onReset={reset}
-          disabled={isStreaming}
-        />
-          </div>
-        )}
-
-        {/* Agent Terminal */}
-        {(steps.length > 0 || isStreaming) && (
-          <div className="mb-6">
-            <AgentTerminal steps={steps} isStreaming={isStreaming} />
-          </div>
-        )}
-
-        {/* Results Dashboard */}
-        {messages.length > 0 && (
-          <div className="mb-6">
-            <ResultsDashboard
-              messages={messages}
-              charts={charts}
-              isDone={isDone}
-            />
-          </div>
-        )}
-
-        {/* Footer hint */}
-        {isDone && (
-          <p className="text-center text-xs text-white/20 pb-4">
-            Вы можете задать уточняющий вопрос или загрузить новый файл
-          </p>
-        )}
+          )}
         </div>
 
         {/* Prompt Input Fixed at Bottom */}
-        <div className="mt-auto shrink-0 w-full">
+        <div className="mt-auto w-full shrink-0 border-t border-[#30363d] bg-[#0d1117] pt-3">
           <PromptInput
             input={input}
             onInputChange={setInput}
