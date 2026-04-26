@@ -53,18 +53,42 @@ export function PromptInput({
       className="relative w-full"
     >
       {hasFile && (
-        <div className="mb-3 flex items-center gap-2 px-1">
+        <div className="mb-3 flex flex-wrap items-center gap-2 px-1">
           <button
             type="button"
-            onClick={() => onModelChange('gemini-1.5-pro')}
+            onClick={() => onModelChange('gemini-3.1-pro')}
             className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-              model === 'gemini-1.5-pro' || model === 'gemini-2.5-pro'
+              model === 'gemini-3.1-pro'
                 ? 'bg-violet-500/20 text-violet-300 ring-1 ring-violet-500/30'
                 : 'text-white/40 hover:bg-white/5 hover:text-white/70'
             }`}
           >
             <Sparkles className="h-3.5 w-3.5" />
             Gemini 3.1 Pro
+          </button>
+          <button
+            type="button"
+            onClick={() => onModelChange('gemini-2.5-pro')}
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+              model === 'gemini-2.5-pro'
+                ? 'bg-blue-500/20 text-blue-300 ring-1 ring-blue-500/30'
+                : 'text-white/40 hover:bg-white/5 hover:text-white/70'
+            }`}
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Gemini 2.5 Pro
+          </button>
+          <button
+            type="button"
+            onClick={() => onModelChange('gemini-1.5-pro')}
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+              model === 'gemini-1.5-pro'
+                ? 'bg-orange-500/20 text-orange-300 ring-1 ring-orange-500/30'
+                : 'text-white/40 hover:bg-white/5 hover:text-white/70'
+            }`}
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Gemini 1.5 Pro
           </button>
           <button
             type="button"
@@ -76,7 +100,7 @@ export function PromptInput({
             }`}
           >
             <Zap className="h-3.5 w-3.5" />
-            Gemini Flash
+            Gemini 1.5 Flash
           </button>
         </div>
       )}

@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     cleanup = session.cleanup;
 
     // --- Step 4: Stream with Selected Model ---
-    const selectedModel = model || 'gemini-2.5-pro';
+    const selectedModel = model || 'gemini-3.1-pro';
     const result = streamText({
       model: google(selectedModel),
       system: session.systemPrompt,

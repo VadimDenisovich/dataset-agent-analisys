@@ -17,7 +17,7 @@ export function useAgentStream() {
   const [steps, setSteps] = useState<AgentStep[]>([]);
   const [charts, setCharts] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [model, setModel] = useState<string>('gemini-2.5-pro');
+  const [model, setModel] = useState<string>('gemini-3.1-pro');
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
   const {
