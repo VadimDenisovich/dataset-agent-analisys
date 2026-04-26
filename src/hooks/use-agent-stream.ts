@@ -17,6 +17,7 @@ export function useAgentStream() {
   const [steps, setSteps] = useState<AgentStep[]>([]);
   const [charts, setCharts] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [model, setModel] = useState<string>('gemini-2.5-pro');
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
   const {
@@ -33,6 +34,7 @@ export function useAgentStream() {
     body: {
       fileId: file?.fileId,
       fileName: file?.fileName,
+      model: model,
     },
     onError(error) {
       // Try to parse structured error from stream
@@ -265,9 +267,11 @@ export function useAgentStream() {
     input,
     isStreaming: status === 'streaming',
     isDone: status === 'ready' && messages.length > 0,
+    model,
 
     // Actions
     setInput,
+    setModel,
     uploadFile,
     handleSubmit,
     reload,

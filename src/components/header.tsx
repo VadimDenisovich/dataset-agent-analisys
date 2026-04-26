@@ -26,9 +26,6 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400 ring-1 ring-emerald-500/20">
-            Gemini 2.5 Pro
-          </span>
           <span className="rounded-full bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-400 ring-1 ring-violet-500/20">
             E2B Sandbox
           </span>

@@ -19,10 +19,11 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { messages, fileId, fileName } = body as {
+    const { messages, fileId, fileName, model } = body as {
       messages: Message[];
       fileId: string;
       fileName: string;
+      model?: string;
     };
 
     if (!fileId || !fileName) {
@@ -74,9 +75,10 @@ export async function POST(request: NextRequest) {
     const session = await setupAgentSession(fileBuffer, fileName);
     cleanup = session.cleanup;
 
-    // --- Step 4: Stream with Gemini 2.5 Pro ---
+    // --- Step 4: Stream with Selected Model ---
+    const selectedModel = model || 'gemini-2.5-pro';
     const result = streamText({
-      model: google('gemini-2.5-pro'),
+      model: google(selectedModel),
       system: session.systemPrompt,
       messages: await convertToModelMessages(messages),
       tools: session.tools,

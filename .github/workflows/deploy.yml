@@ -15,14 +15,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy via SSH
+      - name: Execute deployment on server
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: 31.200.229.59
-          port: 2244
-          username: vadim_denisovich
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-
+          host: ${{ secrets.DEPLOY_HOST }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
             set -e
             echo "=== Deploying Dataset Agent ==="

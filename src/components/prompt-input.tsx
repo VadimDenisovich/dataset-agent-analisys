@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, FormEvent } from 'react';
-import { SendHorizonal, Loader2 } from 'lucide-react';
+import { SendHorizonal, Loader2, Sparkles, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface PromptInputProps {
@@ -11,6 +11,8 @@ interface PromptInputProps {
   disabled?: boolean;
   isStreaming?: boolean;
   hasFile: boolean;
+  model: string;
+  onModelChange: (model: string) => void;
 }
 
 export function PromptInput({
@@ -20,6 +22,8 @@ export function PromptInput({
   disabled,
   isStreaming,
   hasFile,
+  model,
+  onModelChange,
 }: PromptInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -46,10 +50,39 @@ export function PromptInput({
         e.preventDefault();
         onSubmit(e);
       }}
-      className="relative"
+      className="relative w-full"
     >
+      {hasFile && (
+        <div className="mb-3 flex items-center gap-2 px-1">
+          <button
+            type="button"
+            onClick={() => onModelChange('gemini-1.5-pro')}
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+              model === 'gemini-1.5-pro' || model === 'gemini-2.5-pro'
+                ? 'bg-violet-500/20 text-violet-300 ring-1 ring-violet-500/30'
+                : 'text-white/40 hover:bg-white/5 hover:text-white/70'
+            }`}
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Gemini 3.1 Pro
+          </button>
+          <button
+            type="button"
+            onClick={() => onModelChange('gemini-1.5-flash')}
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+              model === 'gemini-1.5-flash'
+                ? 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/30'
+                : 'text-white/40 hover:bg-white/5 hover:text-white/70'
+            }`}
+          >
+            <Zap className="h-3.5 w-3.5" />
+            Gemini Flash
+          </button>
+        </div>
+      )}
+
       <div
-        className={`flex items-end gap-2 rounded-2xl border bg-white/[0.03] p-3 transition-all duration-300 ${
+        className={`flex items-end gap-2 rounded-2xl border bg-white/[0.03] p-3 transition-all duration-300 w-full ${
           hasFile
             ? 'border-white/10 focus-within:border-violet-500/40 focus-within:shadow-lg focus-within:shadow-violet-500/5'
             : 'border-white/5 opacity-60'

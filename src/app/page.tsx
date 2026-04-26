@@ -22,6 +22,8 @@ export default function HomePage() {
     isDone,
     input,
     setInput,
+    model,
+    setModel,
     uploadFile,
     handleSubmit,
     reload,
@@ -29,10 +31,11 @@ export default function HomePage() {
   } = useAgentStream();
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex h-screen flex-col overflow-hidden bg-background">
       <Header />
 
-      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-6 py-8">
+      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col overflow-hidden px-4 py-4 sm:px-6 sm:py-6">
+        <div className={`flex-1 overflow-y-auto no-scrollbar pb-4 flex flex-col ${messages.length === 0 ? 'justify-center' : ''}`}>
         {/* Hero section — only when idle */}
         {messages.length === 0 && !isStreaming && (
           <div className="mb-2 text-center">
@@ -51,36 +54,42 @@ export default function HomePage() {
         )}
 
         {/* Error Alert */}
-        <ErrorAlert error={error} rateLimit={rateLimit} onRetry={reload} />
+        {error && (
+          <div className="mb-6">
+            <ErrorAlert error={error} rateLimit={rateLimit} onRetry={reload} />
+          </div>
+        )}
 
-        {/* Upload Zone */}
-        <UploadZone
+        {/* Upload Zone - Only show when no messages */}
+        {messages.length === 0 && (
+          <div className="mb-6">
+            <UploadZone
           onFileUploaded={uploadFile}
           uploadedFile={file}
           isUploading={isUploading}
           onReset={reset}
           disabled={isStreaming}
         />
-
-        {/* Prompt Input */}
-        <PromptInput
-          input={input}
-          onInputChange={setInput}
-          onSubmit={handleSubmit}
-          disabled={isStreaming}
-          isStreaming={isStreaming}
-          hasFile={!!file}
-        />
+          </div>
+        )}
 
         {/* Agent Terminal */}
-        <AgentTerminal steps={steps} isStreaming={isStreaming} />
+        {(steps.length > 0 || isStreaming) && (
+          <div className="mb-6">
+            <AgentTerminal steps={steps} isStreaming={isStreaming} />
+          </div>
+        )}
 
         {/* Results Dashboard */}
-        <ResultsDashboard
-          messages={messages}
-          charts={charts}
-          isDone={isDone}
-        />
+        {messages.length > 0 && (
+          <div className="mb-6">
+            <ResultsDashboard
+              messages={messages}
+              charts={charts}
+              isDone={isDone}
+            />
+          </div>
+        )}
 
         {/* Footer hint */}
         {isDone && (
@@ -88,6 +97,21 @@ export default function HomePage() {
             Вы можете задать уточняющий вопрос или загрузить новый файл
           </p>
         )}
+        </div>
+
+        {/* Prompt Input Fixed at Bottom */}
+        <div className="mt-auto shrink-0 w-full">
+          <PromptInput
+            input={input}
+            onInputChange={setInput}
+            onSubmit={handleSubmit}
+            disabled={isStreaming}
+            isStreaming={isStreaming}
+            hasFile={!!file}
+            model={model}
+            onModelChange={setModel}
+          />
+        </div>
       </main>
     </div>
   );
