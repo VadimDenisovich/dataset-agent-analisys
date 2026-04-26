@@ -114,8 +114,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return result.toDataStreamResponse({
-      getErrorMessage: (error) => {
+    return result.toUIMessageStreamResponse({
+      onError: (error) => {
         // Cleanup on error
         if (cleanup) {
           cleanup().catch((err) =>
