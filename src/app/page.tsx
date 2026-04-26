@@ -25,6 +25,7 @@ export default function HomePage() {
     setModel,
     uploadFile,
     handleSubmit,
+    runQuickAnalysis,
     reload,
     reset,
   } = useAgentStream();
@@ -54,7 +55,9 @@ export default function HomePage() {
                 uploadedFile={file}
                 isUploading={isUploading}
                 onReset={reset}
+                onAnalyze={runQuickAnalysis}
                 disabled={isStreaming}
+                isAnalyzing={isStreaming}
               />
             </div>
           )}

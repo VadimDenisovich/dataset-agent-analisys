@@ -6,20 +6,16 @@ import { Button } from '@/components/ui/button';
 
 const MODEL_OPTIONS = [
   {
-    value: 'gemini-3.1-pro',
-    label: 'Gemini 3.1 Pro',
+    value: 'gemini-2.0-flash',
+    label: 'Gemini Flash',
   },
   {
     value: 'gemini-2.5-pro',
     label: 'Gemini 2.5 Pro',
   },
   {
-    value: 'gemini-1.5-pro',
-    label: 'Gemini 1.5 Pro',
-  },
-  {
-    value: 'gemini-1.5-flash',
-    label: 'Gemini 1.5 Flash',
+    value: 'gemini-2.5-flash',
+    label: 'Gemini 2.5 Flash',
   },
 ];
 

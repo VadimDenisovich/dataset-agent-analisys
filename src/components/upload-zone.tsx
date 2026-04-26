@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import {
+  BarChart3,
   Upload,
   X,
   CheckCircle2,
@@ -17,7 +18,9 @@ interface UploadZoneProps {
   uploadedFile: UploadedFile | null;
   isUploading: boolean;
   onReset: () => void;
+  onAnalyze: () => void;
   disabled?: boolean;
+  isAnalyzing?: boolean;
 }
 
 export function UploadZone({
@@ -25,7 +28,9 @@ export function UploadZone({
   uploadedFile,
   isUploading,
   onReset,
+  onAnalyze,
   disabled,
+  isAnalyzing,
 }: UploadZoneProps) {
   const [dragMessage, setDragMessage] = useState('');
 
@@ -124,6 +129,19 @@ export function UploadZone({
                 </tbody>
               </table>
             </div>
+            <Button
+              type="button"
+              onClick={onAnalyze}
+              disabled={disabled || isAnalyzing}
+              className="mt-4 w-full border-[#3ecf8e] bg-[#3ecf8e] text-[#050505] hover:bg-[#65e4ab] disabled:border-[#2a2a2a] disabled:bg-[#1a1a1a] disabled:text-[#737373]"
+            >
+              {isAnalyzing ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <BarChart3 className="mr-2 h-4 w-4" />
+              )}
+              Показать результаты анализа
+            </Button>
           </div>
         )}
       </Card>

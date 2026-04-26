@@ -19,7 +19,7 @@ export function useAgentStream() {
   const [charts, setCharts] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [input, setInput] = useState('');
-  const [model, setModel] = useState<string>('gemini-3.1-pro');
+  const [model, setModel] = useState<string>('gemini-2.5-flash');
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
   const {
@@ -192,18 +192,15 @@ export function useAgentStream() {
     }
   }, []);
 
-  // Submit analysis request
-  const handleSubmit = useCallback(
-    (e?: React.FormEvent) => {
-      if (e) e.preventDefault();
-
+  const sendAnalysisRequest = useCallback(
+    (prompt: string) => {
       if (!file) {
         setGenericError('Сначала загрузите файл');
         return;
       }
 
-      const prompt = input.trim();
-      if (!prompt) return;
+      const trimmedPrompt = prompt.trim();
+      if (!trimmedPrompt) return;
 
       // Reset state for new analysis
       setSteps([]);
@@ -214,7 +211,7 @@ export function useAgentStream() {
       addStep('firewall', '🔒 Проверка безопасности...', 'running');
 
       sendMessage(
-        { text: prompt },
+        { text: trimmedPrompt },
         {
           body: {
             fileId: file.fileId,
@@ -224,7 +221,31 @@ export function useAgentStream() {
         }
       );
     },
-    [file, input, model, sendMessage]
+    [file, model, sendMessage]
+  );
+
+  // Submit analysis request
+  const handleSubmit = useCallback(
+    (e?: React.FormEvent) => {
+      if (e) e.preventDefault();
+      sendAnalysisRequest(input);
+    },
+    [input, sendAnalysisRequest]
+  );
+
+  const runQuickAnalysis = useCallback(
+    () => {
+      sendAnalysisRequest(
+        [
+          'Проведи автоматический анализ загруженного датасета без дополнительных вопросов.',
+          'Сам выбери наиболее важные ключевые метрики с учетом структуры данных и кратко объясни, почему они важны.',
+          'Построй информативные графики по найденным метрикам через Python, если в данных есть числовые, временные или категориальные признаки.',
+          'Верни отчет на русском языке со структурой: "Ключевые метрики", "Графики", "Инсайты".',
+          'В блоке инсайтов выдели закономерности, аномалии, ограничения данных и практические выводы.',
+        ].join(' ')
+      );
+    },
+    [sendAnalysisRequest]
   );
 
   const reload = useCallback(() => {
@@ -270,6 +291,7 @@ export function useAgentStream() {
     setModel,
     uploadFile,
     handleSubmit,
+    runQuickAnalysis,
     reload,
     reset,
   };

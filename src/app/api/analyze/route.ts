@@ -13,12 +13,11 @@ import { setupAgentSession } from '@/lib/agent';
 import { isRateLimitError, extractRetryAfter, getErrorMessage } from '@/lib/errors';
 
 const UPLOAD_DIR = join(process.cwd(), 'uploads');
-const DEFAULT_MODEL = 'gemini-3.1-pro';
+const DEFAULT_MODEL = 'gemini-2.5-flash';
 const ALLOWED_MODELS = new Set([
-  'gemini-3.1-pro',
+  'gemini-2.0-flash',
   'gemini-2.5-pro',
-  'gemini-1.5-pro',
-  'gemini-1.5-flash',
+  'gemini-2.5-flash',
 ]);
 
 function getMessageText(message: Message | undefined): string {
