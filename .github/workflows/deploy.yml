@@ -1,0 +1,58 @@
+# ============================================================
+# CI/CD: Deploy to production on push to main
+# ============================================================
+
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: 31.200.229.59
+          port: 2244
+          username: vadim_denisovich
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+          script: |
+            set -e
+            echo "=== Deploying Dataset Agent ==="
+
+            PROJECT_DIR="/docker/dataset-agent-analisys"
+
+            # Navigate to project directory
+            cd "$PROJECT_DIR"
+
+            # Pull latest changes
+            echo "[1/4] Pulling latest code..."
+            git pull origin main
+
+            # Create/update .env.production from secrets
+            echo "[2/4] Writing .env.production..."
+            cat > .env.production << 'EOF'
+            GOOGLE_GENERATIVE_AI_API_KEY=${{ secrets.GOOGLE_API_KEY }}
+            E2B_API_KEY=${{ secrets.E2B_API_KEY }}
+            EOF
+
+            # Remove leading whitespace from heredoc
+            sed -i 's/^            //' .env.production
+
+            # Build and restart containers
+            echo "[3/4] Building and restarting containers..."
+            docker compose down
+            docker compose up -d --build
+
+            # Cleanup old images
+            echo "[4/4] Cleaning up old images..."
+            docker image prune -f
+
+            echo "=== Deploy complete! ==="
