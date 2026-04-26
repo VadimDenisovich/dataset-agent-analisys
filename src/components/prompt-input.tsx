@@ -1,29 +1,25 @@
 'use client';
 
 import { useRef, FormEvent } from 'react';
-import { SendHorizonal, Loader2, Sparkles, Zap } from 'lucide-react';
+import { SendHorizonal, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const MODEL_OPTIONS = [
   {
     value: 'gemini-3.1-pro',
     label: 'Gemini 3.1 Pro',
-    icon: Sparkles,
   },
   {
     value: 'gemini-2.5-pro',
     label: 'Gemini 2.5 Pro',
-    icon: Sparkles,
   },
   {
     value: 'gemini-1.5-pro',
     label: 'Gemini 1.5 Pro',
-    icon: Sparkles,
   },
   {
     value: 'gemini-1.5-flash',
     label: 'Gemini 1.5 Flash',
-    icon: Zap,
   },
 ];
 
@@ -49,6 +45,7 @@ export function PromptInput({
   onModelChange,
 }: PromptInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const prompt = input ?? '';
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -75,41 +72,33 @@ export function PromptInput({
       }}
       className="relative w-full"
     >
-      {hasFile && (
-        <div className="mb-2 flex flex-wrap items-center gap-1 rounded-md border border-[#30363d] bg-[#161b22] p-1">
-          {MODEL_OPTIONS.map((option) => {
-            const Icon = option.icon;
-            const isActive = model === option.value;
-
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => onModelChange(option.value)}
-                className={`flex items-center gap-1.5 rounded-sm px-2.5 py-1.5 text-xs font-medium transition-colors ${
-                  isActive
-                    ? 'bg-[#1f6feb] text-white'
-                    : 'text-[#8b949e] hover:bg-[#21262d] hover:text-[#e6edf3]'
-                }`}
-              >
-                <Icon className="h-3.5 w-3.5" />
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-xs text-[#8f8f8f]">
+          <span>Model</span>
+          <select
+            value={model}
+            onChange={(e) => onModelChange(e.target.value)}
+            className="h-7 rounded-md border border-[#2a2a2a] bg-[#101010] px-2 text-xs font-medium text-[#f8fafc] outline-none transition-colors hover:border-[#3a3a3a] focus:border-[#3ecf8e]"
+          >
+            {MODEL_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
                 {option.label}
-              </button>
-            );
-          })}
+              </option>
+            ))}
+          </select>
         </div>
-      )}
+      </div>
 
       <div
-        className={`flex w-full items-end gap-2 rounded-md border bg-[#161b22] p-2 transition-colors ${
+        className={`flex w-full items-end gap-2 rounded-md border bg-[#101010] p-2 transition-colors ${
           hasFile
-            ? 'border-[#30363d] focus-within:border-[#2f81f7]'
-            : 'border-[#30363d] opacity-70'
+            ? 'border-[#2a2a2a] focus-within:border-[#3ecf8e]'
+            : 'border-[#2a2a2a] opacity-70'
         }`}
       >
         <textarea
           ref={textareaRef}
-          value={input}
+          value={prompt}
           onChange={handleInput}
           onKeyDown={handleKeyDown}
           placeholder={
@@ -119,15 +108,15 @@ export function PromptInput({
           }
           disabled={disabled || !hasFile}
           rows={1}
-          className="flex-1 resize-none bg-transparent px-1 py-1.5 text-sm text-[#e6edf3] placeholder-[#8b949e] outline-none disabled:cursor-not-allowed"
+          className="flex-1 resize-none bg-transparent px-1 py-1.5 text-sm text-[#f8fafc] placeholder-[#8f8f8f] outline-none disabled:cursor-not-allowed"
           style={{ maxHeight: '200px' }}
         />
 
         <Button
           type="submit"
           size="icon"
-          disabled={disabled || !hasFile || (!input.trim() && !isStreaming)}
-          className="h-8 w-8 shrink-0 rounded-md border-[#1f6feb] bg-[#238636] text-white hover:bg-[#2ea043] disabled:border-[#30363d] disabled:bg-[#21262d] disabled:text-[#8b949e]"
+          disabled={disabled || !hasFile || (!prompt.trim() && !isStreaming)}
+          className="h-8 w-8 shrink-0 rounded-md border-[#3ecf8e] bg-[#3ecf8e] text-[#050505] hover:bg-[#65e4ab] disabled:border-[#2a2a2a] disabled:bg-[#1a1a1a] disabled:text-[#737373]"
         >
           {isStreaming ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -136,12 +125,6 @@ export function PromptInput({
           )}
         </Button>
       </div>
-
-      {!hasFile && (
-        <p className="mt-2 text-center text-xs text-[#8b949e]">
-          Загрузите датасет, чтобы начать анализ
-        </p>
-      )}
     </form>
   );
 }

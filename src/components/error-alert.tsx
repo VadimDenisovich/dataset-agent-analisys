@@ -38,7 +38,7 @@ export function ErrorAlert({ error, rateLimit, onRetry }: ErrorAlertProps) {
           </p>
           <Progress
             value={100}
-            className="h-1.5 bg-[#21262d] [&>div]:bg-[#d29922]"
+            className="h-1.5 bg-[#1a1a1a] [&>div]:bg-[#d29922]"
           />
         </AlertDescription>
       </Alert>
@@ -48,9 +48,9 @@ export function ErrorAlert({ error, rateLimit, onRetry }: ErrorAlertProps) {
   // Rate limit expired — show retry
   if (rateLimit?.active && countdown <= 0) {
     return (
-      <Alert className="animate-in fade-in border-[#2ea04366] bg-[#2386361f]">
-        <RefreshCw className="h-4 w-4 text-[#3fb950]" />
-        <AlertTitle className="font-semibold text-[#3fb950]">
+      <Alert className="animate-in fade-in border-[#3ecf8e66] bg-[#3ecf8e1a]">
+        <RefreshCw className="h-4 w-4 text-[#3ecf8e]" />
+        <AlertTitle className="font-semibold text-[#3ecf8e]">
           Можно повторить
         </AlertTitle>
         <AlertDescription className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -62,7 +62,7 @@ export function ErrorAlert({ error, rateLimit, onRetry }: ErrorAlertProps) {
               onClick={onRetry}
               size="sm"
               variant="outline"
-              className="border-[#2ea04366] bg-[#21262d] text-[#3fb950] hover:bg-[#30363d]"
+              className="border-[#3ecf8e66] bg-[#1a1a1a] text-[#3ecf8e] hover:bg-[#242424]"
             >
               <RefreshCw className="mr-2 h-3 w-3" />
               Повторить
@@ -86,7 +86,7 @@ export function ErrorAlert({ error, rateLimit, onRetry }: ErrorAlertProps) {
               onClick={onRetry}
               size="sm"
               variant="outline"
-              className="shrink-0 border-[#da3633] bg-[#21262d] text-[#f85149] hover:bg-[#30363d]"
+              className="shrink-0 border-[#da3633] bg-[#1a1a1a] text-[#f85149] hover:bg-[#242424]"
             >
               <RefreshCw className="mr-2 h-3 w-3" />
               Повторить

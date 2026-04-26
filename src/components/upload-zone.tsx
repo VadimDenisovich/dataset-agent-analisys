@@ -4,7 +4,6 @@ import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import {
   Upload,
-  FileSpreadsheet,
   X,
   CheckCircle2,
   Loader2,
@@ -58,17 +57,17 @@ export function UploadZone({
   // File uploaded state
   if (uploadedFile) {
     return (
-      <Card className="border-[#30363d] bg-[#161b22] py-0">
+      <Card className="border-[#2a2a2a] bg-[#101010] py-0">
         <CardContent className="flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-md border border-[#2ea04366] bg-[#2386361f]">
-              <CheckCircle2 className="h-4 w-4 text-[#3fb950]" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-md border border-[#3ecf8e66] bg-[#3ecf8e1a]">
+              <CheckCircle2 className="h-4 w-4 text-[#3ecf8e]" />
             </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-[#e6edf3]">
+              <p className="truncate text-sm font-medium text-[#f8fafc]">
                 {uploadedFile.fileName}
               </p>
-              <p className="text-xs text-[#8b949e]">
+              <p className="text-xs text-[#8f8f8f]">
                 {(uploadedFile.fileSize / 1024).toFixed(1)} KB
                 {uploadedFile.columns.length > 0 &&
                   ` · ${uploadedFile.columns.length} столбцов`}
@@ -79,7 +78,7 @@ export function UploadZone({
             variant="ghost"
             size="icon"
             onClick={onReset}
-            className="h-8 w-8 text-[#8b949e] hover:bg-[#21262d] hover:text-[#e6edf3]"
+            className="h-8 w-8 text-[#8f8f8f] hover:bg-[#1a1a1a] hover:text-[#f8fafc]"
             disabled={disabled}
           >
             <X className="h-4 w-4" />
@@ -88,18 +87,18 @@ export function UploadZone({
 
         {/* Preview table */}
         {uploadedFile.columns.length > 0 && (
-          <div className="border-t border-[#30363d] px-4 pb-4">
-            <p className="mb-2 mt-3 text-xs font-medium text-[#8b949e]">
+          <div className="border-t border-[#2a2a2a] px-4 pb-4">
+            <p className="mb-2 mt-3 text-xs font-medium text-[#8f8f8f]">
               Превью данных
             </p>
-            <div className="overflow-x-auto rounded-md border border-[#30363d]">
+            <div className="overflow-x-auto rounded-md border border-[#2a2a2a]">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="border-b border-[#30363d] bg-[#0d1117]">
+                  <tr className="border-b border-[#2a2a2a] bg-[#050505]">
                     {uploadedFile.columns.map((col, i) => (
                       <th
                         key={i}
-                        className="whitespace-nowrap border-r border-[#30363d] px-3 py-2 text-left font-medium text-[#e6edf3] last:border-r-0"
+                        className="whitespace-nowrap border-r border-[#2a2a2a] px-3 py-2 text-left font-medium text-[#f8fafc] last:border-r-0"
                       >
                         {col}
                       </th>
@@ -110,12 +109,12 @@ export function UploadZone({
                   {uploadedFile.preview.map((row, ri) => (
                     <tr
                       key={ri}
-                      className="border-b border-[#30363d] last:border-0"
+                      className="border-b border-[#2a2a2a] last:border-0"
                     >
                       {row.map((cell, ci) => (
                         <td
                           key={ci}
-                          className="whitespace-nowrap border-r border-[#30363d] px-3 py-1.5 text-[#8b949e] last:border-r-0"
+                          className="whitespace-nowrap border-r border-[#2a2a2a] px-3 py-1.5 text-[#8f8f8f] last:border-r-0"
                         >
                           {cell || '-'}
                         </td>
@@ -134,10 +133,10 @@ export function UploadZone({
   // Uploading state
   if (isUploading) {
     return (
-      <Card className="border-[#30363d] bg-[#161b22] py-0">
+      <Card className="border-[#2a2a2a] bg-[#101010] py-0">
         <CardContent className="flex flex-col items-center justify-center gap-3 p-8">
-          <Loader2 className="h-6 w-6 animate-spin text-[#2f81f7]" />
-          <p className="text-sm text-[#8b949e]">Загрузка файла...</p>
+          <Loader2 className="h-6 w-6 animate-spin text-[#3ecf8e]" />
+          <p className="text-sm text-[#8f8f8f]">Загрузка файла...</p>
         </CardContent>
       </Card>
     );
@@ -147,38 +146,20 @@ export function UploadZone({
   return (
     <div
       {...getRootProps()}
-      className={`group relative cursor-pointer rounded-md border border-dashed transition-colors ${
+      className={`group relative cursor-pointer rounded-md border transition-colors ${
         isDragActive
-          ? 'border-[#2f81f7] bg-[#1f6feb1f]'
-          : 'border-[#30363d] bg-[#161b22] hover:border-[#8b949e] hover:bg-[#21262d]'
+          ? 'border-[#3ecf8e] bg-[#3ecf8e1a]'
+          : 'border-[#2a2a2a] bg-[#101010] hover:border-[#3ecf8e66] hover:bg-[#151515]'
       }`}
     >
       <input {...getInputProps()} />
-      <div className="flex flex-col items-center justify-center gap-3 p-8 sm:p-10">
-        <div
-          className={`flex h-12 w-12 items-center justify-center rounded-md border transition-colors ${
-            isDragActive
-              ? 'border-[#2f81f7] bg-[#0d1117]'
-              : 'border-[#30363d] bg-[#0d1117] group-hover:border-[#8b949e]'
-          }`}
-        >
-          {isDragActive ? (
-            <FileSpreadsheet className="h-6 w-6 text-[#2f81f7]" />
-          ) : (
-            <Upload className="h-6 w-6 text-[#8b949e] transition-colors group-hover:text-[#e6edf3]" />
-          )}
-        </div>
-
-        <div className="text-center">
-          <p className="text-sm font-medium text-[#e6edf3]">
-            {isDragActive
-              ? dragMessage || 'Отпустите файл'
-              : 'Перетащите датасет сюда'}
-          </p>
-          <p className="mt-1 text-xs text-[#8b949e]">
-            CSV, XLSX или XLS · до 50MB
-          </p>
-        </div>
+      <div className="flex items-center justify-center gap-2 p-8 sm:p-10">
+        <Upload className="h-4 w-4 text-[#3ecf8e]" />
+        <p className="text-sm font-medium text-[#f8fafc]">
+          {isDragActive
+            ? dragMessage || 'Отпустите файл'
+            : 'Перетащите датасет сюда'}
+        </p>
       </div>
     </div>
   );

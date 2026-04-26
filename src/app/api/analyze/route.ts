@@ -13,6 +13,25 @@ import { setupAgentSession } from '@/lib/agent';
 import { isRateLimitError, extractRetryAfter, getErrorMessage } from '@/lib/errors';
 
 const UPLOAD_DIR = join(process.cwd(), 'uploads');
+const DEFAULT_MODEL = 'gemini-3.1-pro';
+const ALLOWED_MODELS = new Set([
+  'gemini-3.1-pro',
+  'gemini-2.5-pro',
+  'gemini-1.5-pro',
+  'gemini-1.5-flash',
+]);
+
+function getMessageText(message: Message | undefined): string {
+  if (!message) return '';
+  if (typeof message.content === 'string') return message.content;
+  if (Array.isArray(message.parts)) {
+    return message.parts
+      .filter((part) => part?.type === 'text' && typeof part.text === 'string')
+      .map((part) => part.text)
+      .join('\n');
+  }
+  return '';
+}
 
 export async function POST(request: NextRequest) {
   let cleanup: (() => Promise<void>) | null = null;
@@ -35,10 +54,7 @@ export async function POST(request: NextRequest) {
 
     // --- Step 1: Firewall Check ---
     const lastMessage = messages[messages.length - 1];
-    const userText =
-      typeof lastMessage?.content === 'string'
-        ? lastMessage.content
-        : '';
+    const userText = getMessageText(lastMessage);
 
     if (userText) {
       const firewallResult = await checkPromptSafety(userText);
@@ -76,7 +92,9 @@ export async function POST(request: NextRequest) {
     cleanup = session.cleanup;
 
     // --- Step 4: Stream with Selected Model ---
-    const selectedModel = model || 'gemini-3.1-pro';
+    const selectedModel = ALLOWED_MODELS.has(model || '')
+      ? model
+      : DEFAULT_MODEL;
     const result = streamText({
       model: google(selectedModel),
       system: session.systemPrompt,

@@ -45,17 +45,17 @@ export function ResultsDashboard({
     <div className="space-y-6">
       {/* Report Card */}
       {reportText && (
-        <Card className="border-[#30363d] bg-[#161b22] py-0">
-          <CardHeader className="border-b border-[#30363d] px-4 py-3">
+        <Card className="border-[#2a2a2a] bg-[#101010] py-0">
+          <CardHeader className="border-b border-[#2a2a2a] px-4 py-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-sm text-[#e6edf3]">
-                <BarChart3 className="h-4 w-4 text-[#2f81f7]" />
+              <CardTitle className="flex items-center gap-2 text-sm text-[#f8fafc]">
+                <BarChart3 className="h-4 w-4 text-[#3ecf8e]" />
                 Отчёт агента
               </CardTitle>
               {isDone && (
                 <Badge
                   variant="outline"
-                  className="border-[#2ea04366] bg-[#2386361f] text-[#3fb950]"
+                  className="border-[#3ecf8e66] bg-[#3ecf8e1a] text-[#3ecf8e]"
                 >
                   Завершён
                 </Badge>
@@ -63,7 +63,7 @@ export function ResultsDashboard({
             </div>
           </CardHeader>
           <CardContent className="px-4 py-4">
-            <div className="prose prose-invert prose-sm max-w-none prose-headings:text-[#e6edf3] prose-headings:font-semibold prose-p:text-[#c9d1d9] prose-a:text-[#2f81f7] prose-strong:text-[#e6edf3] prose-code:bg-[#21262d] prose-code:px-1.5 prose-code:py-0.5 prose-code:text-[#e6edf3] prose-pre:border prose-pre:border-[#30363d] prose-th:text-[#e6edf3] prose-td:text-[#8b949e] prose-li:text-[#c9d1d9]">
+            <div className="prose prose-invert prose-sm max-w-none prose-headings:text-[#f8fafc] prose-headings:font-semibold prose-p:text-[#d4d4d4] prose-a:text-[#3ecf8e] prose-strong:text-[#f8fafc] prose-code:bg-[#1a1a1a] prose-code:px-1.5 prose-code:py-0.5 prose-code:text-[#f8fafc] prose-pre:border prose-pre:border-[#2a2a2a] prose-th:text-[#f8fafc] prose-td:text-[#8f8f8f] prose-li:text-[#d4d4d4]">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {reportText}
               </ReactMarkdown>
@@ -74,14 +74,14 @@ export function ResultsDashboard({
 
       {/* Charts Grid */}
       {charts.length > 0 && (
-        <Card className="border-[#30363d] bg-[#161b22] py-0">
-          <CardHeader className="border-b border-[#30363d] px-4 py-3">
-            <CardTitle className="flex items-center gap-2 text-sm text-[#e6edf3]">
-              <ImageIcon className="h-4 w-4 text-[#2f81f7]" />
+        <Card className="border-[#2a2a2a] bg-[#101010] py-0">
+          <CardHeader className="border-b border-[#2a2a2a] px-4 py-3">
+            <CardTitle className="flex items-center gap-2 text-sm text-[#f8fafc]">
+              <ImageIcon className="h-4 w-4 text-[#3ecf8e]" />
               Визуализации
               <Badge
                 variant="outline"
-                className="ml-auto border-[#30363d] bg-[#21262d] text-[#8b949e]"
+                className="ml-auto border-[#2a2a2a] bg-[#1a1a1a] text-[#8f8f8f]"
               >
                 {charts.length}
               </Badge>
@@ -92,7 +92,7 @@ export function ResultsDashboard({
               {charts.map((chart, index) => (
                 <div
                   key={index}
-                  className="overflow-hidden rounded-md border border-[#30363d] bg-[#0d1117] p-2 transition-colors hover:border-[#8b949e]"
+                  className="overflow-hidden rounded-md border border-[#2a2a2a] bg-[#050505] p-2 transition-colors hover:border-[#3ecf8e66]"
                 >
                   <img
                     src={`data:image/png;base64,${chart}`}

@@ -6,6 +6,7 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { RateLimitState, AgentStep, UploadedFile } from '@/types';
 import { parseAppError } from '@/lib/errors';
@@ -17,25 +18,21 @@ export function useAgentStream() {
   const [steps, setSteps] = useState<AgentStep[]>([]);
   const [charts, setCharts] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [input, setInput] = useState('');
   const [model, setModel] = useState<string>('gemini-3.1-pro');
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
   const {
     messages,
     status,
-    input,
-    setInput,
-    handleSubmit: originalHandleSubmit,
+    sendMessage,
+    regenerate,
     setMessages,
     error: chatError,
-    reload,
   } = useChat({
-    api: '/api/analyze',
-    body: {
-      fileId: file?.fileId,
-      fileName: file?.fileName,
-      model: model,
-    },
+    transport: new DefaultChatTransport({
+      api: '/api/analyze',
+    }),
     onError(error) {
       // Try to parse structured error from stream
       const parsed = parseAppError(error.message);
@@ -49,44 +46,18 @@ export function useAgentStream() {
       }
       setGenericError(parsed?.message || error.message);
     },
-    onResponse(response) {
-      // Handle HTTP-level 429 before stream starts
-      if (response.status === 429) {
-        response.json().then((data) => {
-          setRateLimit({
-            active: true,
-            retryAfter: data.retryAfter || 60,
-            message: data.message || 'Достигнут лимит запросов к ИИ',
-          });
-        }).catch(() => {
-          setRateLimit({
-            active: true,
-            retryAfter: 60,
-            message: 'Достигнут лимит запросов к ИИ',
-          });
-        });
-        return;
-      }
-
-      if (response.status === 403) {
-        response.json().then((data) => {
-          setGenericError(data.message || 'Запрос заблокирован');
-        }).catch(() => {
-          setGenericError('Запрос заблокирован системой безопасности');
-        });
-        return;
-      }
-
-      // Reset errors on successful response start
-      setGenericError(null);
-      setRateLimit(null);
-
-      // Add initial steps
-      addStep('firewall', '🔒 Проверка безопасности пройдена', 'done');
-      addStep('sandbox', '🚀 Песочница E2B запущена', 'done');
-      addStep('agent', '🤖 Агент анализирует данные...', 'running');
+    onFinish() {
+      setInput('');
     },
   });
+
+  useEffect(() => {
+    if (status === 'streaming') {
+      updateStep('firewall', '🔒 Проверка безопасности пройдена', 'done');
+      addStep('sandbox', '🚀 Песочница E2B запущена', 'done');
+      addStep('agent', '🤖 Агент анализирует данные...', 'running');
+    }
+  }, [status]);
 
   // Extract charts from assistant messages that contain tool results
   useEffect(() => {
@@ -225,10 +196,14 @@ export function useAgentStream() {
   const handleSubmit = useCallback(
     (e?: React.FormEvent) => {
       if (e) e.preventDefault();
+
       if (!file) {
         setGenericError('Сначала загрузите файл');
         return;
       }
+
+      const prompt = input.trim();
+      if (!prompt) return;
 
       // Reset state for new analysis
       setSteps([]);
@@ -236,13 +211,34 @@ export function useAgentStream() {
       setGenericError(null);
       setRateLimit(null);
 
-      // Add firewall step as pending
       addStep('firewall', '🔒 Проверка безопасности...', 'running');
 
-      originalHandleSubmit(e);
+      sendMessage(
+        { text: prompt },
+        {
+          body: {
+            fileId: file.fileId,
+            fileName: file.fileName,
+            model,
+          },
+        }
+      );
     },
-    [file, originalHandleSubmit]
+    [file, input, model, sendMessage]
   );
+
+  const reload = useCallback(() => {
+    setGenericError(null);
+    setRateLimit(null);
+    if (!file) return;
+    regenerate({
+      body: {
+        fileId: file.fileId,
+        fileName: file.fileName,
+        model,
+      },
+    });
+  }, [file, model, regenerate]);
 
   // Reset everything
   const reset = useCallback(() => {
@@ -265,7 +261,7 @@ export function useAgentStream() {
     error: genericError || (chatError?.message ?? null),
     isUploading,
     input,
-    isStreaming: status === 'streaming',
+    isStreaming: status === 'submitted' || status === 'streaming',
     isDone: status === 'ready' && messages.length > 0,
     model,
 

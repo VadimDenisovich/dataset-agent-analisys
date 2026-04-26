@@ -13,13 +13,13 @@ interface AgentTerminalProps {
 function StepIcon({ status }: { status: AgentStep['status'] }) {
   switch (status) {
     case 'running':
-      return <Loader2 className="h-3.5 w-3.5 animate-spin text-[#2f81f7]" />;
+      return <Loader2 className="h-3.5 w-3.5 animate-spin text-[#3ecf8e]" />;
     case 'done':
-      return <CheckCircle2 className="h-3.5 w-3.5 text-[#3fb950]" />;
+      return <CheckCircle2 className="h-3.5 w-3.5 text-[#3ecf8e]" />;
     case 'error':
       return <XCircle className="h-3.5 w-3.5 text-[#f85149]" />;
     default:
-      return <Circle className="h-3.5 w-3.5 text-[#8b949e]" />;
+      return <Circle className="h-3.5 w-3.5 text-[#8f8f8f]" />;
   }
 }
 
@@ -36,17 +36,17 @@ export function AgentTerminal({ steps, isStreaming }: AgentTerminalProps) {
   if (steps.length === 0 && !isStreaming) return null;
 
   return (
-    <div className="overflow-hidden rounded-md border border-[#30363d] bg-[#161b22]">
+    <div className="overflow-hidden rounded-md border border-[#2a2a2a] bg-[#101010]">
       {/* Actions-style header */}
-      <div className="flex items-center gap-2 border-b border-[#30363d] bg-[#21262d] px-3 py-2">
-        <span className="text-xs font-semibold text-[#e6edf3]">
+      <div className="flex items-center gap-2 border-b border-[#2a2a2a] bg-[#151515] px-3 py-2">
+        <span className="text-xs font-semibold text-[#f8fafc]">
           Agent Pipeline
         </span>
         {isStreaming && (
-          <span className="ml-auto flex items-center gap-1.5 rounded-full border border-[#1f6feb66] bg-[#1f6feb1f] px-2 py-0.5 text-[10px] font-medium text-[#58a6ff]">
+          <span className="ml-auto flex items-center gap-1.5 rounded-full border border-[#3ecf8e66] bg-[#3ecf8e1a] px-2 py-0.5 text-[10px] font-medium text-[#3ecf8e]">
             <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#2f81f7] opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-[#2f81f7]" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#3ecf8e] opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-[#3ecf8e]" />
             </span>
             LIVE
           </span>
@@ -61,12 +61,12 @@ export function AgentTerminal({ steps, isStreaming }: AgentTerminalProps) {
               key={step.id}
               className={`flex items-center gap-2.5 rounded-sm px-1 py-0.5 transition-colors ${
                 step.status === 'running'
-                  ? 'bg-[#1f6feb14] text-[#e6edf3]'
+                  ? 'bg-[#3ecf8e14] text-[#f8fafc]'
                   : step.status === 'done'
-                    ? 'text-[#8b949e]'
+                    ? 'text-[#8f8f8f]'
                     : step.status === 'error'
                       ? 'text-[#f85149]'
-                      : 'text-[#8b949e]'
+                      : 'text-[#8f8f8f]'
               }`}
               style={{
                 animationDelay: `${index * 100}ms`,
@@ -86,7 +86,7 @@ export function AgentTerminal({ steps, isStreaming }: AgentTerminalProps) {
           {isStreaming && steps.length > 0 && (
             <div className="mt-1 flex items-center gap-2.5 text-[#6e7681]">
               <span className="w-4" />
-              <span className="inline-block h-3 w-px animate-pulse bg-[#2f81f7]" />
+              <span className="inline-block h-3 w-px animate-pulse bg-[#3ecf8e]" />
             </div>
           )}
         </div>

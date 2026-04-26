@@ -8,11 +8,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "border-[#1f6feb] bg-primary text-primary-foreground hover:bg-[#1f6feb] [a]:hover:bg-[#1f6feb]",
+        default: "border-[#3ecf8e] bg-primary text-primary-foreground hover:bg-[#65e4ab] [a]:hover:bg-[#65e4ab]",
         outline:
-          "border-border bg-[#21262d] text-foreground hover:border-[#8b949e] hover:bg-[#30363d] aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-[#21262d] dark:hover:bg-[#30363d]",
+          "border-border bg-[#1a1a1a] text-foreground hover:border-[#3ecf8e66] hover:bg-[#242424] aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-[#1a1a1a] dark:hover:bg-[#242424]",
         secondary:
-          "border-border bg-secondary text-secondary-foreground hover:bg-[#30363d] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+          "border-border bg-secondary text-secondary-foreground hover:bg-[#242424] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:
           "text-muted-foreground hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted",
         destructive:
