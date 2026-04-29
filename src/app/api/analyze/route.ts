@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     const lastMessage = messages[messages.length - 1];
     const userText = getMessageText(lastMessage);
 
-    if (userText) {
+    if (userText && analysisMode !== 'auto') {
       const firewallResult = await checkPromptSafety(userText);
       if (!firewallResult.safe) {
         return Response.json(
