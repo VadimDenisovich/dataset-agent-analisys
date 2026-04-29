@@ -11,6 +11,17 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import type { RateLimitState, AgentStep, UploadedFile } from '@/types';
 import { parseAppError } from '@/lib/errors';
 
+const AUTO_ANALYSIS_PROMPT = [
+  'Проведи автоматический анализ загруженного датасета без дополнительных вопросов.',
+  'Сам выбери наиболее важные ключевые метрики с учетом структуры данных и объясни, почему именно они важны.',
+  'Обязательно выполни Python-код через execute_code: сначала для расчета метрик и профиля данных, затем для построения графиков.',
+  'Построй 2-4 информативных графика через Python, если в данных есть числовые, временные или категориальные признаки.',
+  'Верни итоговый отчет строго на русском языке и строго с разделами: "## Ключевые метрики", "## Графики", "## Инсайты".',
+  'В разделе "Ключевые метрики" перечисли выбранные моделью метрики с конкретными значениями.',
+  'В разделе "Графики" кратко объясни, какие графики построены и как их читать.',
+  'В разделе "Инсайты" выдели закономерности, аномалии, ограничения данных и практические выводы.',
+].join(' ');
+
 export function useAgentStream() {
   const [file, setFile] = useState<UploadedFile | null>(null);
   const [rateLimit, setRateLimit] = useState<RateLimitState | null>(null);
@@ -59,7 +70,8 @@ export function useAgentStream() {
     }
   }, [status]);
 
-  // Extract charts from assistant messages that contain tool results
+  // Extract charts from assistant messages that contain tool results.
+  // AI SDK v6 emits static tool parts as `tool-${name}` with `output`.
   useEffect(() => {
     const allCharts: string[] = [];
     for (const msg of messages) {
@@ -69,6 +81,11 @@ export function useAgentStream() {
             const toolResult = part.toolInvocation.result as { charts?: string[] } | undefined;
             if (toolResult?.charts) {
               allCharts.push(...toolResult.charts);
+            }
+          } else if (part.type === 'tool-execute_code' && part.state === 'output-available') {
+            const toolOutput = part.output as { charts?: string[] } | undefined;
+            if (toolOutput?.charts) {
+              allCharts.push(...toolOutput.charts);
             }
           }
         }
@@ -100,6 +117,26 @@ export function useAgentStream() {
                   'done'
                 );
               }
+            }
+          } else if (part.type === 'tool-execute_code') {
+            if (part.state === 'input-available' || part.state === 'input-streaming') {
+              addStep(
+                `code-${part.toolCallId}`,
+                '⚙️ Выполнение Python-кода...',
+                'running'
+              );
+            } else if (part.state === 'output-available') {
+              updateStep(
+                `code-${part.toolCallId}`,
+                '✅ Код выполнен',
+                'done'
+              );
+            } else if (part.state === 'output-error') {
+              updateStep(
+                `code-${part.toolCallId}`,
+                '❌ Ошибка выполнения кода',
+                'error'
+              );
             }
           }
         }
@@ -193,7 +230,7 @@ export function useAgentStream() {
   }, []);
 
   const sendAnalysisRequest = useCallback(
-    (prompt: string) => {
+    (prompt: string, options?: { analysisMode?: 'auto' | 'chat' }) => {
       if (!file) {
         setGenericError('Сначала загрузите файл');
         return;
@@ -217,6 +254,7 @@ export function useAgentStream() {
             fileId: file.fileId,
             fileName: file.fileName,
             model,
+            analysisMode: options?.analysisMode ?? 'chat',
           },
         }
       );
@@ -235,15 +273,7 @@ export function useAgentStream() {
 
   const runQuickAnalysis = useCallback(
     () => {
-      sendAnalysisRequest(
-        [
-          'Проведи автоматический анализ загруженного датасета без дополнительных вопросов.',
-          'Сам выбери наиболее важные ключевые метрики с учетом структуры данных и кратко объясни, почему они важны.',
-          'Построй информативные графики по найденным метрикам через Python, если в данных есть числовые, временные или категориальные признаки.',
-          'Верни отчет на русском языке со структурой: "Ключевые метрики", "Графики", "Инсайты".',
-          'В блоке инсайтов выдели закономерности, аномалии, ограничения данных и практические выводы.',
-        ].join(' ')
-      );
+      sendAnalysisRequest(AUTO_ANALYSIS_PROMPT, { analysisMode: 'auto' });
     },
     [sendAnalysisRequest]
   );

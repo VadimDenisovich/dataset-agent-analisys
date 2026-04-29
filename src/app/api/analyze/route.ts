@@ -20,6 +20,23 @@ const ALLOWED_MODELS = new Set([
   'gemini-2.5-flash',
 ]);
 
+const AUTO_ANALYSIS_SYSTEM_PROMPT = `## Режим автоматического отчета
+Пользователь нажал кнопку "Показать результаты анализа". Нужно сразу подготовить законченный первичный отчет, а не задавать уточняющие вопросы.
+
+Обязательный порядок работы:
+1. Выполни Python через execute_code для чтения файла, определения структуры, типов, пропусков и расчета ключевых метрик.
+2. Сам выбери самые важные метрики для этого датасета. Не используй шаблонные метрики, если они не подходят данным.
+3. Выполни Python через execute_code для построения 2-4 графиков, если структура данных это позволяет. Каждый график должен вызываться через plt.show().
+4. Финальный ответ дай строго на русском языке и строго в таком порядке:
+   - ## Ключевые метрики
+   - ## Графики
+   - ## Инсайты
+
+В "Ключевые метрики" укажи конкретные значения и краткую интерпретацию.
+В "Графики" кратко опиши построенные визуализации и что на них смотреть.
+В "Инсайты" дай закономерности, аномалии, ограничения данных и практические выводы.
+Не добавляй отдельные разделы до, между или после этих трех разделов.`;
+
 function getMessageText(message: Message | undefined): string {
   if (!message) return '';
   if (typeof message.content === 'string') return message.content;
@@ -37,11 +54,12 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { messages, fileId, fileName, model } = body as {
+    const { messages, fileId, fileName, model, analysisMode } = body as {
       messages: Message[];
       fileId: string;
       fileName: string;
       model?: string;
+      analysisMode?: 'auto' | 'chat';
     };
 
     if (!fileId || !fileName) {
@@ -96,7 +114,10 @@ export async function POST(request: NextRequest) {
       : DEFAULT_MODEL;
     const result = streamText({
       model: google(selectedModel),
-      system: session.systemPrompt,
+      system:
+        analysisMode === 'auto'
+          ? `${session.systemPrompt}\n\n${AUTO_ANALYSIS_SYSTEM_PROMPT}`
+          : session.systemPrompt,
       messages: await convertToModelMessages(messages),
       tools: session.tools,
       maxSteps: 10,
