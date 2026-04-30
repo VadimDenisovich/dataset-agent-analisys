@@ -6,7 +6,7 @@
 import { NextRequest } from 'next/server';
 import { streamText, convertToModelMessages, Message } from 'ai';
 import { google } from '@ai-sdk/google';
-import { createGitHubModels } from '@github/models';
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { checkPromptSafety } from '@/lib/firewall';
@@ -35,8 +35,11 @@ function createModel(model: string) {
       throw new Error('GitHub Models token is not configured');
     }
 
-    const githubModels = createGitHubModels({
+    const githubModels = createOpenAICompatible({
+      name: 'github-models',
+      baseURL: 'https://models.github.ai/inference',
       apiKey,
+      includeUsage: true,
       fetch: async (input, init) => {
         const response = await fetch(input, init);
         recordModelRateLimitHeaders(model, response.headers);
