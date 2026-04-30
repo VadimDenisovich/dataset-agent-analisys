@@ -46,7 +46,7 @@ export function createExecuteCodeTool(sandbox: Sandbox) {
   return tool({
     description:
       'Выполняет Python-код в изолированной песочнице. Возвращает текстовый вывод и графики (base64 PNG). Используй для анализа данных, вычислений и визуализаций.',
-    parameters: z.object({
+    inputSchema: z.object({
       code: z
         .string()
         .describe('Python-код для выполнения. Для графиков используй plt.show()'),
