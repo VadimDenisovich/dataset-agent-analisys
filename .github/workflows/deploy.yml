@@ -47,6 +47,7 @@ jobs:
             cat > .env.production << 'EOF'
             GOOGLE_GENERATIVE_AI_API_KEY=${{ secrets.GOOGLE_API_KEY }}
             E2B_API_KEY=${{ secrets.E2B_API_KEY }}
+            GH_MODELS_GPT=${{ secrets.GH_MODELS_GPT }}
             EOF
 
             # Remove leading whitespace from heredoc

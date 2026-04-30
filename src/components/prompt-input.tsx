@@ -17,7 +17,25 @@ const MODEL_OPTIONS = [
     value: 'gemini-2.5-flash',
     label: 'Gemini 2.5 Flash',
   },
+  {
+    value: 'github-gpt-4.1',
+    label: 'GPT-4.1 (GitHub)',
+  },
 ];
+
+interface ModelUsage {
+  model: string;
+  requests: number;
+  successes: number;
+  failures: number;
+  lastError: string | null;
+  rateLimit: {
+    limit: number | null;
+    remaining: number | null;
+    used: number | null;
+    resetAt: string | null;
+  };
+}
 
 interface PromptInputProps {
   input: string;
@@ -28,6 +46,15 @@ interface PromptInputProps {
   hasFile: boolean;
   model: string;
   onModelChange: (model: string) => void;
+  modelUsage?: ModelUsage[];
+}
+
+function formatResetTime(value: string | null) {
+  if (!value) return null;
+  return new Intl.DateTimeFormat('ru-RU', {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(value));
 }
 
 export function PromptInput({
@@ -39,9 +66,26 @@ export function PromptInput({
   hasFile,
   model,
   onModelChange,
+  modelUsage,
 }: PromptInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const prompt = input ?? '';
+  const selectedUsage = modelUsage?.find((item) => item.model === model);
+  const rateLimit = selectedUsage?.rateLimit;
+  const usedLimit =
+    rateLimit?.used ??
+    (rateLimit?.limit != null && rateLimit?.remaining != null
+      ? rateLimit.limit - rateLimit.remaining
+      : null);
+  const resetTime = formatResetTime(rateLimit?.resetAt ?? null);
+  const usageText =
+    rateLimit?.limit != null
+      ? `Лимит: ${usedLimit ?? '—'}/${rateLimit.limit} · осталось ${
+          rateLimit.remaining ?? '—'
+        }${resetTime ? ` · сброс ${resetTime}` : ''}`
+      : selectedUsage
+        ? `Запросов: ${selectedUsage.requests} · ошибок: ${selectedUsage.failures}`
+        : 'Лимиты: пока нет данных';
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -68,7 +112,7 @@ export function PromptInput({
       }}
       className="relative w-full"
     >
-      <div className="mb-2 flex items-center justify-between gap-2">
+      <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2 text-xs text-[#8f8f8f]">
           <span>Model</span>
           <select
@@ -82,6 +126,14 @@ export function PromptInput({
               </option>
             ))}
           </select>
+        </div>
+        <div
+          className={`text-xs ${
+            selectedUsage?.lastError ? 'text-[#ff6369]' : 'text-[#8f8f8f]'
+          }`}
+          title={selectedUsage?.lastError || usageText}
+        >
+          {usageText}
         </div>
       </div>
 

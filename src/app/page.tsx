@@ -23,6 +23,7 @@ export default function HomePage() {
     setInput,
     model,
     setModel,
+    modelUsage,
     uploadFile,
     handleSubmit,
     runQuickAnalysis,
@@ -99,6 +100,7 @@ export default function HomePage() {
             hasFile={!!file}
             model={model}
             onModelChange={setModel}
+            modelUsage={modelUsage}
           />
         </div>
       </main>

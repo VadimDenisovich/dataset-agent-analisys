@@ -6,11 +6,17 @@
 import { NextRequest } from 'next/server';
 import { streamText, convertToModelMessages, Message } from 'ai';
 import { google } from '@ai-sdk/google';
+import { createGitHubModels } from '@github/models';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { checkPromptSafety } from '@/lib/firewall';
 import { setupAgentSession } from '@/lib/agent';
 import { isRateLimitError, extractRetryAfter, getErrorMessage } from '@/lib/errors';
+import {
+  recordModelRateLimitHeaders,
+  recordModelRequestFinish,
+  recordModelRequestStart,
+} from '@/lib/model-usage';
 
 const UPLOAD_DIR = join(process.cwd(), 'uploads');
 const DEFAULT_MODEL = 'gemini-2.5-flash';
@@ -18,7 +24,31 @@ const ALLOWED_MODELS = new Set([
   'gemini-2.0-flash',
   'gemini-2.5-pro',
   'gemini-2.5-flash',
+  'github-gpt-4.1',
 ]);
+
+function createModel(model: string) {
+  if (model === 'github-gpt-4.1') {
+    const apiKey = process.env.GH_MODELS_GPT;
+
+    if (!apiKey) {
+      throw new Error('GitHub Models token is not configured');
+    }
+
+    const githubModels = createGitHubModels({
+      apiKey,
+      fetch: async (input, init) => {
+        const response = await fetch(input, init);
+        recordModelRateLimitHeaders(model, response.headers);
+        return response;
+      },
+    });
+
+    return githubModels('openai/gpt-4.1');
+  }
+
+  return google(model);
+}
 
 const AUTO_ANALYSIS_SYSTEM_PROMPT = `## Режим автоматического отчета
 Пользователь нажал кнопку "Показать результаты анализа". Нужно сразу подготовить законченный первичный отчет, а не задавать уточняющие вопросы.
@@ -51,6 +81,17 @@ function getMessageText(message: Message | undefined): string {
 
 export async function POST(request: NextRequest) {
   let cleanup: (() => Promise<void>) | null = null;
+  let selectedModelForUsage: string | null = null;
+  let modelRequestFinished = false;
+
+  const finishModelRequest = (
+    status: 'success' | 'failure',
+    error?: string
+  ) => {
+    if (!selectedModelForUsage || modelRequestFinished) return;
+    recordModelRequestFinish(selectedModelForUsage, status, error);
+    modelRequestFinished = true;
+  };
 
   try {
     const body = await request.json();
@@ -110,10 +151,13 @@ export async function POST(request: NextRequest) {
 
     // --- Step 4: Stream with Selected Model ---
     const selectedModel = ALLOWED_MODELS.has(model || '')
-      ? model
+      ? model!
       : DEFAULT_MODEL;
+    selectedModelForUsage = selectedModel;
+    recordModelRequestStart(selectedModel);
+
     const result = streamText({
-      model: google(selectedModel),
+      model: createModel(selectedModel),
       system:
         analysisMode === 'auto'
           ? `${session.systemPrompt}\n\n${AUTO_ANALYSIS_SYSTEM_PROMPT}`
@@ -123,8 +167,10 @@ export async function POST(request: NextRequest) {
       maxSteps: 10,
       onError({ error }) {
         console.error('[Agent Stream Error]', error);
+        finishModelRequest('failure', getErrorMessage(error));
       },
       onFinish() {
+        finishModelRequest('success');
         // Cleanup sandbox after stream finishes
         if (cleanup) {
           cleanup().catch((err) =>
@@ -147,6 +193,7 @@ export async function POST(request: NextRequest) {
 
         if (isRateLimitError(error)) {
           const retryAfter = extractRetryAfter(error);
+          finishModelRequest('failure', 'Rate limit');
           return JSON.stringify({
             type: 'RATE_LIMIT',
             retryAfter,
@@ -154,6 +201,7 @@ export async function POST(request: NextRequest) {
           });
         }
 
+        finishModelRequest('failure', getErrorMessage(error));
         return getErrorMessage(error);
       },
     });
@@ -166,6 +214,10 @@ export async function POST(request: NextRequest) {
     }
 
     console.error('[Analyze Error]', error);
+    finishModelRequest(
+      'failure',
+      error instanceof Error ? error.message : 'Internal server error'
+    );
 
     // Handle Rate Limit errors that happen BEFORE streaming starts
     if (isRateLimitError(error)) {

@@ -22,6 +22,23 @@ const AUTO_ANALYSIS_PROMPT = [
   'В разделе "Инсайты" выдели закономерности, аномалии, ограничения данных и практические выводы.',
 ].join(' ');
 
+interface ModelUsageSnapshot {
+  model: string;
+  label: string;
+  requests: number;
+  successes: number;
+  failures: number;
+  lastUsedAt: string | null;
+  lastError: string | null;
+  rateLimit: {
+    limit: number | null;
+    remaining: number | null;
+    used: number | null;
+    resetAt: string | null;
+    resource: string | null;
+  };
+}
+
 export function useAgentStream() {
   const [file, setFile] = useState<UploadedFile | null>(null);
   const [rateLimit, setRateLimit] = useState<RateLimitState | null>(null);
@@ -31,7 +48,19 @@ export function useAgentStream() {
   const [isUploading, setIsUploading] = useState(false);
   const [input, setInput] = useState('');
   const [model, setModel] = useState<string>('gemini-2.5-flash');
+  const [modelUsage, setModelUsage] = useState<ModelUsageSnapshot[]>([]);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
+
+  const refreshModelUsage = useCallback(async () => {
+    try {
+      const response = await fetch('/api/model-usage', { cache: 'no-store' });
+      if (!response.ok) return;
+      const data = await response.json();
+      setModelUsage(Array.isArray(data.models) ? data.models : []);
+    } catch {
+      // Usage stats are informational only; never block analysis on them.
+    }
+  }, []);
 
   const {
     messages,
@@ -56,11 +85,36 @@ export function useAgentStream() {
         return;
       }
       setGenericError(parsed?.message || error.message);
+      void refreshModelUsage();
     },
     onFinish() {
       setInput('');
+      void refreshModelUsage();
     },
   });
+
+  useEffect(() => {
+    const initialTimeoutId = window.setTimeout(() => {
+      void refreshModelUsage();
+    }, 0);
+    const intervalId = window.setInterval(() => {
+      void refreshModelUsage();
+    }, 15000);
+
+    return () => {
+      window.clearTimeout(initialTimeoutId);
+      window.clearInterval(intervalId);
+    };
+  }, [refreshModelUsage]);
+
+  useEffect(() => {
+    if (status === 'ready') {
+      const timeoutId = window.setTimeout(() => {
+        void refreshModelUsage();
+      }, 0);
+      return () => window.clearTimeout(timeoutId);
+    }
+  }, [status, refreshModelUsage]);
 
   useEffect(() => {
     if (status === 'streaming') {
@@ -315,6 +369,7 @@ export function useAgentStream() {
     isStreaming: status === 'submitted' || status === 'streaming',
     isDone: status === 'ready' && messages.length > 0,
     model,
+    modelUsage,
 
     // Actions
     setInput,
