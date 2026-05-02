@@ -39,6 +39,34 @@ interface ModelUsageSnapshot {
   };
 }
 
+function createInitialPipelineSteps(): AgentStep[] {
+  const timestamp = Date.now();
+
+  return [
+    {
+      id: 'firewall',
+      label: '🔒 Проверка безопасности...',
+      status: 'running',
+      icon: '',
+      timestamp,
+    },
+    {
+      id: 'sandbox',
+      label: '🚀 Подготовка песочницы E2B...',
+      status: 'pending',
+      icon: '',
+      timestamp,
+    },
+    {
+      id: 'agent',
+      label: '🤖 Ожидание ответа модели...',
+      status: 'pending',
+      icon: '',
+      timestamp,
+    },
+  ];
+}
+
 export function useAgentStream() {
   const [file, setFile] = useState<UploadedFile | null>(null);
   const [rateLimit, setRateLimit] = useState<RateLimitState | null>(null);
@@ -94,6 +122,35 @@ export function useAgentStream() {
     },
   });
 
+  const addStep = useCallback(
+    (id: string, label: string, status: AgentStep['status']) => {
+      setSteps((prev) => {
+        // Don't add duplicate steps
+        if (prev.some((s) => s.id === id)) return prev;
+        return [
+          ...prev,
+          {
+            id,
+            label,
+            status,
+            icon: '',
+            timestamp: Date.now(),
+          },
+        ];
+      });
+    },
+    []
+  );
+
+  const updateStep = useCallback(
+    (id: string, label: string, status: AgentStep['status']) => {
+      setSteps((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, label, status } : s))
+      );
+    },
+    []
+  );
+
   useEffect(() => {
     const initialTimeoutId = window.setTimeout(() => {
       void refreshModelUsage();
@@ -118,12 +175,27 @@ export function useAgentStream() {
   }, [status, refreshModelUsage]);
 
   useEffect(() => {
-    if (status === 'streaming') {
-      updateStep('firewall', '🔒 Проверка безопасности пройдена', 'done');
-      addStep('sandbox', '🚀 Песочница E2B запущена', 'done');
-      addStep('agent', '🤖 Агент анализирует данные...', 'running');
+    if (status === 'submitted') {
+      const timeoutId = window.setTimeout(() => {
+        updateStep('firewall', '🔒 Проверка безопасности пройдена', 'done');
+        updateStep('sandbox', '🚀 Песочница E2B запускается...', 'running');
+      }, 700);
+
+      return () => window.clearTimeout(timeoutId);
     }
-  }, [status]);
+
+    if (status === 'streaming') {
+      const timeoutId = window.setTimeout(() => {
+        updateStep('firewall', '🔒 Проверка безопасности пройдена', 'done');
+        addStep('sandbox', '🚀 Песочница E2B запущена', 'done');
+        updateStep('sandbox', '🚀 Песочница E2B запущена', 'done');
+        addStep('agent', '🤖 Агент анализирует данные...', 'running');
+        updateStep('agent', '🤖 Агент анализирует данные...', 'running');
+      }, 0);
+
+      return () => window.clearTimeout(timeoutId);
+    }
+  }, [addStep, status, updateStep]);
 
   // Extract charts from assistant messages that contain tool results.
   // AI SDK v6 emits static tool parts as `tool-${name}` with `output`.
@@ -146,69 +218,115 @@ export function useAgentStream() {
         }
       }
     }
-    setCharts(allCharts);
+    const timeoutId = window.setTimeout(() => {
+      setCharts(allCharts);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [messages]);
 
   // Track tool calls for step updates
   useEffect(() => {
-    for (const msg of messages) {
-      if (msg.role === 'assistant' && msg.parts) {
-        for (const part of msg.parts) {
-          if (part.type === 'tool-invocation') {
-            const toolName = part.toolInvocation.toolName;
-            const state = part.toolInvocation.state;
+    const timeoutId = window.setTimeout(() => {
+      for (const msg of messages) {
+        if (msg.role === 'assistant' && msg.parts) {
+          for (const part of msg.parts) {
+            if (part.type === 'tool-invocation') {
+              const toolName = part.toolInvocation.toolName;
+              const state = part.toolInvocation.state;
 
-            if (toolName === 'execute_code') {
-              if (state === 'call') {
+              if (toolName === 'execute_code') {
+                if (state === 'call') {
+                  updateStep('agent', '🤖 Агент анализирует данные', 'done');
+                  addStep(
+                    `code-${part.toolInvocation.toolCallId}`,
+                    '⚙️ Выполнение Python-кода...',
+                    'running'
+                  );
+                } else if (state === 'result') {
+                  updateStep(
+                    `code-${part.toolInvocation.toolCallId}`,
+                    '✅ Код выполнен',
+                    'done'
+                  );
+                }
+              }
+            } else if (part.type === 'tool-execute_code') {
+              if (part.state === 'input-available' || part.state === 'input-streaming') {
+                updateStep('agent', '🤖 Агент анализирует данные', 'done');
                 addStep(
-                  `code-${part.toolInvocation.toolCallId}`,
+                  `code-${part.toolCallId}`,
                   '⚙️ Выполнение Python-кода...',
                   'running'
                 );
-              } else if (state === 'result') {
+              } else if (part.state === 'output-available') {
                 updateStep(
-                  `code-${part.toolInvocation.toolCallId}`,
+                  `code-${part.toolCallId}`,
                   '✅ Код выполнен',
                   'done'
                 );
+              } else if (part.state === 'output-error') {
+                updateStep(
+                  `code-${part.toolCallId}`,
+                  '❌ Ошибка выполнения кода',
+                  'error'
+                );
               }
-            }
-          } else if (part.type === 'tool-execute_code') {
-            if (part.state === 'input-available' || part.state === 'input-streaming') {
-              addStep(
-                `code-${part.toolCallId}`,
-                '⚙️ Выполнение Python-кода...',
-                'running'
-              );
-            } else if (part.state === 'output-available') {
-              updateStep(
-                `code-${part.toolCallId}`,
-                '✅ Код выполнен',
-                'done'
-              );
-            } else if (part.state === 'output-error') {
-              updateStep(
-                `code-${part.toolCallId}`,
-                '❌ Ошибка выполнения кода',
-                'error'
-              );
             }
           }
         }
       }
-    }
-  }, [messages]);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [addStep, messages, updateStep]);
 
   // Mark agent step as done when streaming finishes
   useEffect(() => {
     if (status === 'ready' && steps.some((s) => s.status === 'running')) {
-      setSteps((prev) =>
-        prev.map((s) =>
-          s.status === 'running' ? { ...s, status: 'done' as const, label: s.label.replace('...', '') } : s
-        )
-      );
+      const timeoutId = window.setTimeout(() => {
+        setSteps((prev) =>
+          prev.map((s) =>
+            s.status === 'running' ? { ...s, status: 'done' as const, label: s.label.replace('...', '') } : s
+          )
+        );
+      }, 0);
+
+      return () => window.clearTimeout(timeoutId);
     }
   }, [status, steps]);
+
+  useEffect(() => {
+    const hasStartedAnalysis = steps.length > 0;
+    const hasUserMessage = messages.some((msg) => msg.role === 'user');
+    const hasAssistantMessage = messages.some((msg) => msg.role === 'assistant');
+
+    if (
+      status === 'ready' &&
+      hasStartedAnalysis &&
+      hasUserMessage &&
+      !hasAssistantMessage &&
+      !genericError &&
+      !chatError
+    ) {
+      const timeoutId = window.setTimeout(() => {
+        setGenericError(
+          'Модель не вернула ответ. Повторите запрос или выберите другую модель.'
+        );
+        setSteps((prev) =>
+          prev.map((step) =>
+            step.id === 'agent' ||
+            step.status === 'pending' ||
+            step.status === 'running'
+              ? { ...step, status: 'error' as const }
+              : step
+          )
+        );
+      }, 0);
+
+      return () => window.clearTimeout(timeoutId);
+    }
+  }, [chatError, genericError, messages, status, steps]);
 
   // Rate limit countdown timer
   useEffect(() => {
@@ -228,29 +346,6 @@ export function useAgentStream() {
       if (countdownRef.current) clearInterval(countdownRef.current);
     };
   }, [rateLimit?.active]);
-
-  function addStep(id: string, label: string, status: AgentStep['status']) {
-    setSteps((prev) => {
-      // Don't add duplicate steps
-      if (prev.some((s) => s.id === id)) return prev;
-      return [
-        ...prev,
-        {
-          id,
-          label,
-          status,
-          icon: '',
-          timestamp: Date.now(),
-        },
-      ];
-    });
-  }
-
-  function updateStep(id: string, label: string, status: AgentStep['status']) {
-    setSteps((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, label, status } : s))
-    );
-  }
 
   // Upload file
   const uploadFile = useCallback(async (fileObj: File) => {
@@ -295,12 +390,10 @@ export function useAgentStream() {
       if (!trimmedPrompt) return;
 
       // Reset state for new analysis
-      setSteps([]);
+      setSteps(createInitialPipelineSteps());
       setCharts([]);
       setGenericError(null);
       setRateLimit(null);
-
-      addStep('firewall', '🔒 Проверка безопасности...', 'running');
 
       sendMessage(
         { text: trimmedPrompt },
@@ -337,6 +430,8 @@ export function useAgentStream() {
     setGenericError(null);
     setRateLimit(null);
     if (!file) return;
+    setSteps(createInitialPipelineSteps());
+    setCharts([]);
     regenerate({
       body: {
         fileId: file.fileId,
@@ -370,7 +465,8 @@ export function useAgentStream() {
     isUploading,
     input,
     isStreaming: status === 'submitted' || status === 'streaming',
-    isDone: status === 'ready' && messages.length > 0,
+    isDone:
+      status === 'ready' && messages.some((msg) => msg.role === 'assistant'),
     model,
     modelUsage,
 
