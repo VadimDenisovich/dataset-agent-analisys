@@ -33,7 +33,7 @@ export default function HomePage() {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[#050505] text-[#f8fafc]">
-      <Header />
+      <Header onHomeClick={reset} />
 
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col overflow-hidden px-3 py-3 sm:px-6 sm:py-5">
         <div

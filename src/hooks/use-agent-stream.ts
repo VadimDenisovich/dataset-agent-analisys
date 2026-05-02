@@ -67,6 +67,7 @@ export function useAgentStream() {
     status,
     sendMessage,
     regenerate,
+    stop,
     setMessages,
     error: chatError,
   } = useChat({
@@ -347,13 +348,15 @@ export function useAgentStream() {
 
   // Reset everything
   const reset = useCallback(() => {
+    stop();
     setFile(null);
     setSteps([]);
     setCharts([]);
     setGenericError(null);
     setRateLimit(null);
+    setInput('');
     setMessages([]);
-  }, [setMessages]);
+  }, [setMessages, stop]);
 
   return {
     // State
