@@ -16,7 +16,7 @@ export interface GenericErrorInfo {
 export type AppError = RateLimitInfo | GenericErrorInfo;
 
 /**
- * Check if an error is a Rate Limit (429) error from Gemini API.
+ * Check if an error is a Rate Limit (429) error from the model provider API.
  * Works with various error shapes: Error objects, API responses, etc.
  */
 export function isRateLimitError(error: unknown): boolean {

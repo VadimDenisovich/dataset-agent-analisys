@@ -4,8 +4,8 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Dataset Agent — Интеллектуальный анализ данных',
   description:
-    'Загрузите датасет и получите глубокий анализ с визуализациями. Работает на базе Gemini 2.5 Pro и E2B Code Interpreter.',
-  keywords: ['анализ данных', 'AI', 'Gemini', 'датасет', 'визуализация'],
+    'Загрузите датасет и получите глубокий анализ с визуализациями. Работает на базе GitHub Models и E2B Code Interpreter.',
+  keywords: ['анализ данных', 'AI', 'GitHub Models', 'датасет', 'визуализация'],
   openGraph: {
     title: 'Dataset Agent — Интеллектуальный анализ данных',
     description:
