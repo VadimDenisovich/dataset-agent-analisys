@@ -23,7 +23,6 @@ export default function HomePage() {
     setInput,
     model,
     setModel,
-    modelUsage,
     uploadFile,
     handleSubmit,
     runQuickAnalysis,
@@ -81,12 +80,6 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* Footer hint */}
-          {isDone && (
-            <p className="pb-4 text-center text-xs text-[#8f8f8f]">
-              Вы можете задать уточняющий вопрос или загрузить новый файл
-            </p>
-          )}
         </div>
 
         {/* Prompt Input Fixed at Bottom */}
@@ -100,7 +93,6 @@ export default function HomePage() {
             hasFile={!!file}
             model={model}
             onModelChange={setModel}
-            modelUsage={modelUsage}
           />
         </div>
       </main>

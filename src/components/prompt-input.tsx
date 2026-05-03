@@ -6,36 +6,30 @@ import { Button } from '@/components/ui/button';
 
 const MODEL_OPTIONS = [
   {
-    value: 'gemini-2.0-flash',
-    label: 'Gemini Flash',
+    value: 'openai/gpt-4.1-mini',
+    label: 'GPT-4.1 Mini',
   },
   {
-    value: 'gemini-2.5-pro',
-    label: 'Gemini 2.5 Pro',
+    value: 'openai/gpt-4.1-nano',
+    label: 'GPT-4.1 Nano',
   },
   {
-    value: 'gemini-2.5-flash',
-    label: 'Gemini 2.5 Flash',
+    value: 'openai/gpt-4o-mini',
+    label: 'GPT-4o Mini',
   },
   {
-    value: 'github-gpt-4.1',
-    label: 'GPT-4.1 (GitHub)',
+    value: 'mistral-ai/mistral-small-2503',
+    label: 'Mistral Small 3.1',
+  },
+  {
+    value: 'mistral-ai/mistral-medium-2505',
+    label: 'Mistral Medium 3',
+  },
+  {
+    value: 'mistral-ai/ministral-3b',
+    label: 'Ministral 3B',
   },
 ];
-
-interface ModelUsage {
-  model: string;
-  requests: number;
-  successes: number;
-  failures: number;
-  lastError: string | null;
-  rateLimit: {
-    limit: number | null;
-    remaining: number | null;
-    used: number | null;
-    resetAt: string | null;
-  };
-}
 
 interface PromptInputProps {
   input: string;
@@ -46,15 +40,6 @@ interface PromptInputProps {
   hasFile: boolean;
   model: string;
   onModelChange: (model: string) => void;
-  modelUsage?: ModelUsage[];
-}
-
-function formatResetTime(value: string | null) {
-  if (!value) return null;
-  return new Intl.DateTimeFormat('ru-RU', {
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(value));
 }
 
 export function PromptInput({
@@ -66,26 +51,9 @@ export function PromptInput({
   hasFile,
   model,
   onModelChange,
-  modelUsage,
 }: PromptInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const prompt = input ?? '';
-  const selectedUsage = modelUsage?.find((item) => item.model === model);
-  const rateLimit = selectedUsage?.rateLimit;
-  const usedLimit =
-    rateLimit?.used ??
-    (rateLimit?.limit != null && rateLimit?.remaining != null
-      ? rateLimit.limit - rateLimit.remaining
-      : null);
-  const resetTime = formatResetTime(rateLimit?.resetAt ?? null);
-  const usageText =
-    rateLimit?.limit != null
-      ? `Лимит: ${usedLimit ?? '—'}/${rateLimit.limit} · осталось ${
-          rateLimit.remaining ?? '—'
-        }${resetTime ? ` · сброс ${resetTime}` : ''}`
-      : selectedUsage
-        ? `Запросов: ${selectedUsage.requests} · ошибок: ${selectedUsage.failures}`
-        : 'Лимиты: пока нет данных';
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -112,29 +80,19 @@ export function PromptInput({
       }}
       className="relative w-full"
     >
-      <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2 text-xs text-[#8f8f8f]">
-          <span>Model</span>
-          <select
-            value={model}
-            onChange={(e) => onModelChange(e.target.value)}
-            className="h-7 rounded-md border border-[#2a2a2a] bg-[#101010] px-2 text-xs font-medium text-[#f8fafc] outline-none transition-colors hover:border-[#3a3a3a] focus:border-[#3ecf8e]"
-          >
-            {MODEL_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div
-          className={`text-xs ${
-            selectedUsage?.lastError ? 'text-[#ff6369]' : 'text-[#8f8f8f]'
-          }`}
-          title={selectedUsage?.lastError || usageText}
+      <div className="mb-2 flex items-center gap-2 text-xs text-[#8f8f8f]">
+        <span>Model</span>
+        <select
+          value={model}
+          onChange={(e) => onModelChange(e.target.value)}
+          className="h-7 rounded-md border border-[#2a2a2a] bg-[#101010] px-2 text-xs font-medium text-[#f8fafc] outline-none transition-colors hover:border-[#3a3a3a] focus:border-[#3ecf8e]"
         >
-          {usageText}
-        </div>
+          {MODEL_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div

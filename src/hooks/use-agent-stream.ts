@@ -11,33 +11,19 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import type { RateLimitState, AgentStep, UploadedFile } from '@/types';
 import { parseAppError } from '@/lib/errors';
 
+const DEFAULT_MODEL = 'openai/gpt-4.1-mini';
+
 const AUTO_ANALYSIS_PROMPT = [
   'Проведи автоматический анализ загруженного датасета без дополнительных вопросов.',
   'Сам выбери наиболее важные ключевые метрики с учетом структуры данных и объясни, почему именно они важны.',
   'Обязательно выполни Python-код через execute_code: сначала для расчета метрик и профиля данных, затем для построения графиков.',
   'Построй 2-4 информативных графика через Python, если в данных есть числовые, временные или категориальные признаки.',
+  'После последнего execute_code обязательно верни финальный текстовый Markdown-отчет, не завершай ответ только инструментом.',
   'Верни итоговый отчет строго на русском языке и строго с разделами: "## Ключевые метрики", "## Графики", "## Инсайты".',
   'В разделе "Ключевые метрики" перечисли выбранные моделью метрики с конкретными значениями.',
   'В разделе "Графики" кратко объясни, какие графики построены и как их читать.',
   'В разделе "Инсайты" выдели закономерности, аномалии, ограничения данных и практические выводы.',
 ].join(' ');
-
-interface ModelUsageSnapshot {
-  model: string;
-  label: string;
-  requests: number;
-  successes: number;
-  failures: number;
-  lastUsedAt: string | null;
-  lastError: string | null;
-  rateLimit: {
-    limit: number | null;
-    remaining: number | null;
-    used: number | null;
-    resetAt: string | null;
-    resource: string | null;
-  };
-}
 
 function createInitialPipelineSteps(): AgentStep[] {
   const timestamp = Date.now();
@@ -67,6 +53,33 @@ function createInitialPipelineSteps(): AgentStep[] {
   ];
 }
 
+interface TextPartLike {
+  type?: string;
+  text?: unknown;
+}
+
+interface MessageTextLike {
+  role?: string;
+  content?: unknown;
+  parts?: TextPartLike[];
+}
+
+function getAssistantResponseText(messages: MessageTextLike[]) {
+  return messages
+    .filter((msg) => msg.role === 'assistant')
+    .map((msg) => {
+      if (typeof msg.content === 'string') return msg.content;
+      if (!Array.isArray(msg.parts)) return '';
+
+      return msg.parts
+        .filter((part) => part?.type === 'text' && typeof part.text === 'string')
+        .map((part) => part.text)
+        .join('\n');
+    })
+    .join('\n')
+    .trim();
+}
+
 export function useAgentStream() {
   const [file, setFile] = useState<UploadedFile | null>(null);
   const [rateLimit, setRateLimit] = useState<RateLimitState | null>(null);
@@ -75,20 +88,9 @@ export function useAgentStream() {
   const [charts, setCharts] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [input, setInput] = useState('');
-  const [model, setModel] = useState<string>('gemini-2.5-flash');
-  const [modelUsage, setModelUsage] = useState<ModelUsageSnapshot[]>([]);
+  const [model, setModel] = useState<string>(DEFAULT_MODEL);
+  const [lastAnalysisMode, setLastAnalysisMode] = useState<'auto' | 'chat'>('chat');
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
-
-  const refreshModelUsage = useCallback(async () => {
-    try {
-      const response = await fetch('/api/model-usage', { cache: 'no-store' });
-      if (!response.ok) return;
-      const data = await response.json();
-      setModelUsage(Array.isArray(data.models) ? data.models : []);
-    } catch {
-      // Usage stats are informational only; never block analysis on them.
-    }
-  }, []);
 
   const {
     messages,
@@ -114,11 +116,9 @@ export function useAgentStream() {
         return;
       }
       setGenericError(parsed?.message || error.message);
-      void refreshModelUsage();
     },
     onFinish() {
       setInput('');
-      void refreshModelUsage();
     },
   });
 
@@ -150,29 +150,6 @@ export function useAgentStream() {
     },
     []
   );
-
-  useEffect(() => {
-    const initialTimeoutId = window.setTimeout(() => {
-      void refreshModelUsage();
-    }, 0);
-    const intervalId = window.setInterval(() => {
-      void refreshModelUsage();
-    }, 15000);
-
-    return () => {
-      window.clearTimeout(initialTimeoutId);
-      window.clearInterval(intervalId);
-    };
-  }, [refreshModelUsage]);
-
-  useEffect(() => {
-    if (status === 'ready') {
-      const timeoutId = window.setTimeout(() => {
-        void refreshModelUsage();
-      }, 0);
-      return () => window.clearTimeout(timeoutId);
-    }
-  }, [status, refreshModelUsage]);
 
   useEffect(() => {
     if (status === 'submitted') {
@@ -300,18 +277,23 @@ export function useAgentStream() {
     const hasStartedAnalysis = steps.length > 0;
     const hasUserMessage = messages.some((msg) => msg.role === 'user');
     const hasAssistantMessage = messages.some((msg) => msg.role === 'assistant');
+    const hasAssistantText = getAssistantResponseText(messages).length > 0;
+    const missingAutoReport =
+      lastAnalysisMode === 'auto' && hasAssistantMessage && !hasAssistantText;
 
     if (
       status === 'ready' &&
       hasStartedAnalysis &&
       hasUserMessage &&
-      !hasAssistantMessage &&
+      (!hasAssistantMessage || missingAutoReport) &&
       !genericError &&
       !chatError
     ) {
       const timeoutId = window.setTimeout(() => {
         setGenericError(
-          'Модель не вернула ответ. Повторите запрос или выберите другую модель.'
+          missingAutoReport
+            ? 'Отчет не сформирован. Модель выполнила код, но не вернула финальный Markdown-отчет. Повторите анализ или выберите другую модель.'
+            : 'Модель не вернула ответ. Повторите запрос или выберите другую модель.'
         );
         setSteps((prev) =>
           prev.map((step) =>
@@ -326,7 +308,7 @@ export function useAgentStream() {
 
       return () => window.clearTimeout(timeoutId);
     }
-  }, [chatError, genericError, messages, status, steps]);
+  }, [chatError, genericError, lastAnalysisMode, messages, status, steps]);
 
   // Rate limit countdown timer
   useEffect(() => {
@@ -345,7 +327,7 @@ export function useAgentStream() {
     return () => {
       if (countdownRef.current) clearInterval(countdownRef.current);
     };
-  }, [rateLimit?.active]);
+  }, [rateLimit?.active, rateLimit?.retryAfter]);
 
   // Upload file
   const uploadFile = useCallback(async (fileObj: File) => {
@@ -390,6 +372,8 @@ export function useAgentStream() {
       if (!trimmedPrompt) return;
 
       // Reset state for new analysis
+      const analysisMode = options?.analysisMode ?? 'chat';
+      setLastAnalysisMode(analysisMode);
       setSteps(createInitialPipelineSteps());
       setCharts([]);
       setGenericError(null);
@@ -402,7 +386,7 @@ export function useAgentStream() {
             fileId: file.fileId,
             fileName: file.fileName,
             model,
-            analysisMode: options?.analysisMode ?? 'chat',
+            analysisMode,
           },
         }
       );
@@ -437,9 +421,10 @@ export function useAgentStream() {
         fileId: file.fileId,
         fileName: file.fileName,
         model,
+        analysisMode: lastAnalysisMode,
       },
     });
-  }, [file, model, regenerate]);
+  }, [file, lastAnalysisMode, model, regenerate]);
 
   // Reset everything
   const reset = useCallback(() => {
@@ -450,6 +435,7 @@ export function useAgentStream() {
     setGenericError(null);
     setRateLimit(null);
     setInput('');
+    setLastAnalysisMode('chat');
     setMessages([]);
   }, [setMessages, stop]);
 
@@ -466,9 +452,11 @@ export function useAgentStream() {
     input,
     isStreaming: status === 'submitted' || status === 'streaming',
     isDone:
-      status === 'ready' && messages.some((msg) => msg.role === 'assistant'),
+      status === 'ready' &&
+      getAssistantResponseText(messages).length > 0 &&
+      !genericError &&
+      !chatError,
     model,
-    modelUsage,
 
     // Actions
     setInput,

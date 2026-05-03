@@ -1,8 +1,10 @@
 export const MODEL_LABELS: Record<string, string> = {
-  'gemini-2.0-flash': 'Gemini Flash',
-  'gemini-2.5-pro': 'Gemini 2.5 Pro',
-  'gemini-2.5-flash': 'Gemini 2.5 Flash',
-  'github-gpt-4.1': 'GPT-4.1 (GitHub)',
+  'openai/gpt-4.1-mini': 'GPT-4.1 Mini',
+  'openai/gpt-4.1-nano': 'GPT-4.1 Nano',
+  'openai/gpt-4o-mini': 'GPT-4o Mini',
+  'mistral-ai/mistral-small-2503': 'Mistral Small 3.1',
+  'mistral-ai/mistral-medium-2505': 'Mistral Medium 3',
+  'mistral-ai/ministral-3b': 'Ministral 3B',
 };
 
 interface ModelUsageState {
