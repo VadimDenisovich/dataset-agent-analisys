@@ -1,10 +1,18 @@
 export const MODEL_LABELS: Record<string, string> = {
-  'openai/gpt-4.1-mini': 'GPT-4.1 Mini',
-  'openai/gpt-4.1-nano': 'GPT-4.1 Nano',
-  'openai/gpt-4o-mini': 'GPT-4o Mini',
-  'mistral-ai/mistral-small-2503': 'Mistral Small 3.1',
-  'mistral-ai/mistral-medium-2505': 'Mistral Medium 3',
-  'mistral-ai/ministral-3b': 'Ministral 3B',
+  'openai/gpt-4.1-mini': 'GPT-4.1 Mini · 1M',
+  'openai/gpt-4.1-nano': 'GPT-4.1 Nano · 1M',
+  'openai/gpt-4.1': 'GPT-4.1 · 1M',
+  'meta/llama-4-scout-17b-16e-instruct': 'Llama 4 Scout · 10M',
+  'meta/llama-4-maverick-17b-128e-instruct-fp8':
+    'Llama 4 Maverick · 1M',
+  'ai21-labs/ai21-jamba-1.5-large': 'Jamba 1.5 Large · 256K',
+  'openai/gpt-4o': 'GPT-4o · 128K',
+  'openai/gpt-4o-mini': 'GPT-4o Mini · 128K',
+  'cohere/cohere-command-r-plus-08-2024': 'Command R+ · 128K',
+  'deepseek/deepseek-v3-0324': 'DeepSeek V3 · 128K',
+  'mistral-ai/mistral-small-2503': 'Mistral Small 3.1 · 128K',
+  'mistral-ai/mistral-medium-2505': 'Mistral Medium 3 · 128K',
+  'mistral-ai/ministral-3b': 'Ministral 3B · 128K',
 };
 
 interface ModelUsageState {
