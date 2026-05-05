@@ -11,7 +11,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import type { RateLimitState, AgentStep, UploadedFile } from '@/types';
 import { parseAppError } from '@/lib/errors';
 
-const DEFAULT_MODEL = 'openai/gpt-4.1-mini';
+const DEFAULT_MODEL = 'openai/gpt-4.1';
 
 const AUTO_ANALYSIS_PROMPT = [
   'Проведи автоматический анализ загруженного датасета без дополнительных вопросов.',
@@ -72,7 +72,9 @@ function getAssistantResponseText(messages: MessageTextLike[]) {
       if (!Array.isArray(msg.parts)) return '';
 
       return msg.parts
-        .filter((part) => part?.type === 'text' && typeof part.text === 'string')
+        .filter(
+          (part) => part?.type === 'text' && typeof part.text === 'string'
+        )
         .map((part) => part.text)
         .join('\n');
     })
@@ -89,7 +91,9 @@ export function useAgentStream() {
   const [isUploading, setIsUploading] = useState(false);
   const [input, setInput] = useState('');
   const [model, setModel] = useState<string>(DEFAULT_MODEL);
-  const [lastAnalysisMode, setLastAnalysisMode] = useState<'auto' | 'chat'>('chat');
+  const [lastAnalysisMode, setLastAnalysisMode] = useState<'auto' | 'chat'>(
+    'chat'
+  );
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
   const {
@@ -182,11 +186,16 @@ export function useAgentStream() {
       if (msg.role === 'assistant' && msg.parts) {
         for (const part of msg.parts) {
           if (part.type === 'tool-invocation') {
-            const toolResult = part.toolInvocation.result as { charts?: string[] } | undefined;
+            const toolResult = part.toolInvocation.result as
+              | { charts?: string[] }
+              | undefined;
             if (toolResult?.charts) {
               allCharts.push(...toolResult.charts);
             }
-          } else if (part.type === 'tool-execute_code' && part.state === 'output-available') {
+          } else if (
+            part.type === 'tool-execute_code' &&
+            part.state === 'output-available'
+          ) {
             const toolOutput = part.output as { charts?: string[] } | undefined;
             if (toolOutput?.charts) {
               allCharts.push(...toolOutput.charts);
@@ -229,7 +238,10 @@ export function useAgentStream() {
                 }
               }
             } else if (part.type === 'tool-execute_code') {
-              if (part.state === 'input-available' || part.state === 'input-streaming') {
+              if (
+                part.state === 'input-available' ||
+                part.state === 'input-streaming'
+              ) {
                 updateStep('agent', '🤖 Агент анализирует данные', 'done');
                 addStep(
                   `code-${part.toolCallId}`,
@@ -264,7 +276,13 @@ export function useAgentStream() {
       const timeoutId = window.setTimeout(() => {
         setSteps((prev) =>
           prev.map((s) =>
-            s.status === 'running' ? { ...s, status: 'done' as const, label: s.label.replace('...', '') } : s
+            s.status === 'running'
+              ? {
+                  ...s,
+                  status: 'done' as const,
+                  label: s.label.replace('...', ''),
+                }
+              : s
           )
         );
       }, 0);
@@ -276,7 +294,9 @@ export function useAgentStream() {
   useEffect(() => {
     const hasStartedAnalysis = steps.length > 0;
     const hasUserMessage = messages.some((msg) => msg.role === 'user');
-    const hasAssistantMessage = messages.some((msg) => msg.role === 'assistant');
+    const hasAssistantMessage = messages.some(
+      (msg) => msg.role === 'assistant'
+    );
     const hasAssistantText = getAssistantResponseText(messages).length > 0;
     const missingAutoReport =
       lastAnalysisMode === 'auto' && hasAssistantMessage && !hasAssistantText;
@@ -403,12 +423,9 @@ export function useAgentStream() {
     [input, sendAnalysisRequest]
   );
 
-  const runQuickAnalysis = useCallback(
-    () => {
-      sendAnalysisRequest(AUTO_ANALYSIS_PROMPT, { analysisMode: 'auto' });
-    },
-    [sendAnalysisRequest]
-  );
+  const runQuickAnalysis = useCallback(() => {
+    sendAnalysisRequest(AUTO_ANALYSIS_PROMPT, { analysisMode: 'auto' });
+  }, [sendAnalysisRequest]);
 
   const reload = useCallback(() => {
     setGenericError(null);

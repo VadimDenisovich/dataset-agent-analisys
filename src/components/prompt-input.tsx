@@ -6,56 +6,12 @@ import { Button } from '@/components/ui/button';
 
 const MODEL_OPTIONS = [
   {
-    value: 'openai/gpt-4.1-mini',
-    label: 'GPT-4.1 Mini · 1M',
-  },
-  {
-    value: 'openai/gpt-4.1-nano',
-    label: 'GPT-4.1 Nano · 1M',
-  },
-  {
     value: 'openai/gpt-4.1',
     label: 'GPT-4.1 · 1M',
   },
   {
-    value: 'meta/llama-4-scout-17b-16e-instruct',
-    label: 'Llama 4 Scout · 10M',
-  },
-  {
-    value: 'meta/llama-4-maverick-17b-128e-instruct-fp8',
-    label: 'Llama 4 Maverick · 1M',
-  },
-  {
-    value: 'ai21-labs/ai21-jamba-1.5-large',
-    label: 'Jamba 1.5 Large · 256K',
-  },
-  {
-    value: 'openai/gpt-4o',
-    label: 'GPT-4o · 128K',
-  },
-  {
-    value: 'openai/gpt-4o-mini',
-    label: 'GPT-4o Mini · 128K',
-  },
-  {
-    value: 'cohere/cohere-command-r-plus-08-2024',
-    label: 'Command R+ · 128K',
-  },
-  {
     value: 'deepseek/deepseek-v3-0324',
     label: 'DeepSeek V3 · 128K',
-  },
-  {
-    value: 'mistral-ai/mistral-small-2503',
-    label: 'Mistral Small 3.1 · 128K',
-  },
-  {
-    value: 'mistral-ai/mistral-medium-2505',
-    label: 'Mistral Medium 3 · 128K',
-  },
-  {
-    value: 'mistral-ai/ministral-3b',
-    label: 'Ministral 3B · 128K',
   },
 ];
 
