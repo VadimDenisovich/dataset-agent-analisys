@@ -125,6 +125,7 @@ export function useAgentStream() {
     regenerate,
     stop,
     setMessages,
+    clearError,
     error: chatError,
   } = useChat({
     transport: new DefaultChatTransport({
@@ -420,6 +421,7 @@ export function useAgentStream() {
       setCharts([]);
       setGenericError(null);
       setRateLimit(null);
+      clearError();
 
       sendMessage(
         { text: trimmedPrompt },
@@ -433,7 +435,7 @@ export function useAgentStream() {
         }
       );
     },
-    [file, model, sendMessage]
+    [clearError, file, model, sendMessage]
   );
 
   // Submit analysis request
@@ -452,6 +454,7 @@ export function useAgentStream() {
   const reload = useCallback(() => {
     setGenericError(null);
     setRateLimit(null);
+    clearError();
     if (!file) return;
     setSteps(createInitialPipelineSteps());
     setCharts([]);
@@ -463,7 +466,7 @@ export function useAgentStream() {
         analysisMode: lastAnalysisMode,
       },
     });
-  }, [file, lastAnalysisMode, model, regenerate]);
+  }, [clearError, file, lastAnalysisMode, model, regenerate]);
 
   const repeatMessage = useCallback(
     (messageId: string) => {
@@ -504,10 +507,11 @@ export function useAgentStream() {
     setCharts([]);
     setGenericError(null);
     setRateLimit(null);
+    clearError();
     setInput('');
     setLastAnalysisMode('chat');
     setMessages([]);
-  }, [setMessages, stop]);
+  }, [clearError, setMessages, stop]);
 
   const clearFile = useCallback(() => {
     reset();

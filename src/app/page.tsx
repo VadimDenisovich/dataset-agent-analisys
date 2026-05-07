@@ -28,7 +28,7 @@ export default function HomePage() {
   } = useAgentStream();
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-[#050b14] text-[#f8fafc]">
+    <div className="flex h-screen flex-col overflow-hidden bg-[#0b0f0d] text-[#f4fbf7]">
       <Header onHomeClick={reset} />
       <AgentChat
         file={file}
