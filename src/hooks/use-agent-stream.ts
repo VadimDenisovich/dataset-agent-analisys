@@ -1,4 +1,3 @@
-// @ts-nocheck
 // ============================================================
 // Hook: useAgentStream — Chat streaming with error handling
 // ============================================================
@@ -12,18 +11,7 @@ import type { RateLimitState, AgentStep, UploadedFile } from '@/types';
 import { parseAppError } from '@/lib/errors';
 
 const DEFAULT_MODEL = 'openai/gpt-4.1';
-
-const AUTO_ANALYSIS_PROMPT = [
-  'Проведи автоматический анализ загруженного датасета без дополнительных вопросов.',
-  'Сам выбери наиболее важные ключевые метрики с учетом структуры данных и объясни, почему именно они важны.',
-  'Обязательно выполни Python-код через execute_code: сначала для расчета метрик и профиля данных, затем для построения графиков.',
-  'Построй 2-4 информативных графика через Python, если в данных есть числовые, временные или категориальные признаки.',
-  'После последнего execute_code обязательно верни финальный текстовый Markdown-отчет, не завершай ответ только инструментом.',
-  'Верни итоговый отчет строго на русском языке и строго с разделами: "## Ключевые метрики", "## Графики", "## Инсайты".',
-  'В разделе "Ключевые метрики" перечисли выбранные моделью метрики с конкретными значениями.',
-  'В разделе "Графики" кратко объясни, какие графики построены и как их читать.',
-  'В разделе "Инсайты" выдели закономерности, аномалии, ограничения данных и практические выводы.',
-].join(' ');
+const QUICK_ANALYSIS_LABEL = 'Показать результаты анализа';
 
 function createInitialPipelineSteps(): AgentStep[] {
   const timestamp = Date.now();
@@ -64,6 +52,28 @@ interface MessageTextLike {
   parts?: TextPartLike[];
 }
 
+interface LegacyToolInvocationPart {
+  type: 'tool-invocation';
+  toolInvocation: {
+    toolName: string;
+    state: string;
+    toolCallId: string;
+    result?: unknown;
+  };
+}
+
+function isLegacyToolInvocationPart(
+  part: unknown
+): part is LegacyToolInvocationPart {
+  return (
+    typeof part === 'object' &&
+    part !== null &&
+    (part as { type?: unknown }).type === 'tool-invocation' &&
+    typeof (part as { toolInvocation?: unknown }).toolInvocation === 'object' &&
+    (part as { toolInvocation?: unknown }).toolInvocation !== null
+  );
+}
+
 function getAssistantResponseText(messages: MessageTextLike[]) {
   return messages
     .filter((msg) => msg.role === 'assistant')
@@ -78,6 +88,18 @@ function getAssistantResponseText(messages: MessageTextLike[]) {
         .map((part) => part.text)
         .join('\n');
     })
+    .join('\n')
+    .trim();
+}
+
+function getMessageText(message: MessageTextLike | undefined) {
+  if (!message) return '';
+  if (typeof message.content === 'string') return message.content;
+  if (!Array.isArray(message.parts)) return '';
+
+  return message.parts
+    .filter((part) => part?.type === 'text' && typeof part.text === 'string')
+    .map((part) => part.text)
     .join('\n')
     .trim();
 }
@@ -185,7 +207,7 @@ export function useAgentStream() {
     for (const msg of messages) {
       if (msg.role === 'assistant' && msg.parts) {
         for (const part of msg.parts) {
-          if (part.type === 'tool-invocation') {
+          if (isLegacyToolInvocationPart(part)) {
             const toolResult = part.toolInvocation.result as
               | { charts?: string[] }
               | undefined;
@@ -217,7 +239,7 @@ export function useAgentStream() {
       for (const msg of messages) {
         if (msg.role === 'assistant' && msg.parts) {
           for (const part of msg.parts) {
-            if (part.type === 'tool-invocation') {
+            if (isLegacyToolInvocationPart(part)) {
               const toolName = part.toolInvocation.toolName;
               const state = part.toolInvocation.state;
 
@@ -424,7 +446,7 @@ export function useAgentStream() {
   );
 
   const runQuickAnalysis = useCallback(() => {
-    sendAnalysisRequest(AUTO_ANALYSIS_PROMPT, { analysisMode: 'auto' });
+    sendAnalysisRequest(QUICK_ANALYSIS_LABEL, { analysisMode: 'auto' });
   }, [sendAnalysisRequest]);
 
   const reload = useCallback(() => {
@@ -443,6 +465,37 @@ export function useAgentStream() {
     });
   }, [file, lastAnalysisMode, model, regenerate]);
 
+  const repeatMessage = useCallback(
+    (messageId: string) => {
+      if (!file) return;
+
+      const messageIndex = messages.findIndex((msg) => msg.id === messageId);
+      if (messageIndex === -1) return;
+
+      const assistantIndexes = messages
+        .map((msg, index) => (msg.role === 'assistant' ? index : -1))
+        .filter((index) => index !== -1);
+      const lastAssistantIndex = assistantIndexes.at(-1);
+
+      if (messageIndex === lastAssistantIndex) {
+        reload();
+        return;
+      }
+
+      const previousUserMessage = [...messages.slice(0, messageIndex)]
+        .reverse()
+        .find((msg) => msg.role === 'user');
+      const prompt = getMessageText(previousUserMessage);
+
+      if (!prompt) return;
+
+      sendAnalysisRequest(prompt, {
+        analysisMode: prompt === QUICK_ANALYSIS_LABEL ? 'auto' : 'chat',
+      });
+    },
+    [file, messages, reload, sendAnalysisRequest]
+  );
+
   // Reset everything
   const reset = useCallback(() => {
     stop();
@@ -455,6 +508,10 @@ export function useAgentStream() {
     setLastAnalysisMode('chat');
     setMessages([]);
   }, [setMessages, stop]);
+
+  const clearFile = useCallback(() => {
+    reset();
+  }, [reset]);
 
   return {
     // State
@@ -479,8 +536,10 @@ export function useAgentStream() {
     setInput,
     setModel,
     uploadFile,
+    clearFile,
     handleSubmit,
     runQuickAnalysis,
+    repeatMessage,
     reload,
     reset,
   };
