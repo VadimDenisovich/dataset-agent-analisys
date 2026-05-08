@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
 
+const faviconHref = '/favicon.ico?v=20260508';
+
 export const metadata: Metadata = {
   title: 'Dataset Agent — Интеллектуальный анализ данных',
   description:
@@ -8,10 +10,11 @@ export const metadata: Metadata = {
   keywords: ['анализ данных', 'AI', 'GitHub Models', 'датасет', 'визуализация'],
   icons: {
     icon: [
+      { url: faviconHref, sizes: 'any' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
       { url: '/icon.svg', type: 'image/svg+xml' },
-      { url: '/favicon.svg', type: 'image/svg+xml', rel: 'shortcut icon' },
     ],
-    shortcut: '/favicon.svg',
+    shortcut: faviconHref,
     apple: '/icon.svg',
   },
   openGraph: {
