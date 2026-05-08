@@ -6,6 +6,14 @@ export const metadata: Metadata = {
   description:
     'Загрузите датасет и получите глубокий анализ с визуализациями. Работает на базе GitHub Models и E2B Code Interpreter.',
   keywords: ['анализ данных', 'AI', 'GitHub Models', 'датасет', 'визуализация'],
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.svg', type: 'image/svg+xml', rel: 'shortcut icon' },
+    ],
+    shortcut: '/favicon.svg',
+    apple: '/icon.svg',
+  },
   openGraph: {
     title: 'Dataset Agent — Интеллектуальный анализ данных',
     description:

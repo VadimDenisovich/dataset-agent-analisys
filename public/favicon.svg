@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Dataset Agent favicon">
+  <rect width="64" height="64" rx="16" fill="#0b0f0d"/>
+  <rect x="12" y="12" width="40" height="40" rx="11" fill="#151a17" stroke="#3ecf8e" stroke-width="2"/>
+  <path d="M21 38V27.5c0-2.76 4.93-5 11-5s11 2.24 11 5V38c0 2.76-4.93 5-11 5s-11-2.24-11-5Z" fill="#20352a"/>
+  <path d="M21 27.5c0 2.76 4.93 5 11 5s11-2.24 11-5M21 33c0 2.76 4.93 5 11 5s11-2.24 11-5M21 38c0 2.76 4.93 5 11 5s11-2.24 11-5" fill="none" stroke="#3ecf8e" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="32" cy="33" r="3.5" fill="#f4fbf7"/>
+</svg>
