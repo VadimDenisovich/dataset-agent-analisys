@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Dataset Agent">
+  <rect width="64" height="64" rx="16" fill="#0b0f0d"/>
+  <rect x="10" y="10" width="44" height="44" rx="12" fill="#151a17" stroke="#3ecf8e" stroke-width="2"/>
+  <path d="M20 39V25c0-3.31 5.37-6 12-6s12 2.69 12 6v14c0 3.31-5.37 6-12 6s-12-2.69-12-6Z" fill="#20352a"/>
+  <path d="M20 25c0 3.31 5.37 6 12 6s12-2.69 12-6M20 32c0 3.31 5.37 6 12 6s12-2.69 12-6M20 39c0 3.31 5.37 6 12 6s12-2.69 12-6" fill="none" stroke="#3ecf8e" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M26 36l4-4 4 3 5-7" fill="none" stroke="#f4fbf7" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

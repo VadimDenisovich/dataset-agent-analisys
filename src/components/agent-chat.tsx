@@ -47,6 +47,8 @@ const MODEL_OPTIONS = [
 
 const LONG_MESSAGE_LIMIT = 4500;
 const LONG_CODE_LINE_LIMIT = 80;
+const CHART_HEADING_PATTERN = /^#{1,6}\s*(графики|визуализации)\b/i;
+const SECTION_HEADING_PATTERN = /^#{1,6}\s+\S/;
 
 interface AgentChatProps {
   file: UploadedFile | null;
@@ -121,6 +123,96 @@ function getMessageCharts(message: UIMessage) {
 function stabilizeMarkdown(markdown: string) {
   const fenceCount = (markdown.match(/^```/gm) ?? []).length;
   return fenceCount % 2 === 1 ? `${markdown}\n\`\`\`` : markdown;
+}
+
+function findChartSectionEnd(lines: string[], startIndex: number) {
+  for (let index = startIndex + 1; index < lines.length; index += 1) {
+    if (SECTION_HEADING_PATTERN.test(lines[index] ?? '')) return index;
+  }
+
+  return lines.length;
+}
+
+function splitMarkdownForInlineCharts(content: string) {
+  const lines = content.split('\n');
+  const chartHeadingIndex = lines.findIndex((line) =>
+    CHART_HEADING_PATTERN.test(line.trim())
+  );
+
+  if (chartHeadingIndex === -1) {
+    return {
+      beforeCharts: content,
+      afterCharts: '',
+    };
+  }
+
+  const chartSectionEnd = findChartSectionEnd(lines, chartHeadingIndex);
+
+  return {
+    beforeCharts: lines.slice(0, chartSectionEnd).join('\n').trimEnd(),
+    afterCharts: lines.slice(chartSectionEnd).join('\n').trimStart(),
+  };
+}
+
+function useSmoothStreamingText(content: string, streaming?: boolean) {
+  const initialText = streaming ? '' : content;
+  const [visibleText, setVisibleText] = useState(initialText);
+  const visibleRef = useRef(initialText);
+  const targetRef = useRef(content);
+  const frameRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    targetRef.current = content;
+
+    if (!streaming) {
+      if (frameRef.current !== null) {
+        window.cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
+      visibleRef.current = content;
+      setVisibleText(content);
+      return;
+    }
+
+    const tick = () => {
+      const current = visibleRef.current;
+      const target = targetRef.current;
+
+      if (current === target) {
+        frameRef.current = null;
+        return;
+      }
+
+      if (!target.startsWith(current)) {
+        visibleRef.current = target;
+        setVisibleText(target);
+        frameRef.current = null;
+        return;
+      }
+
+      const remaining = target.length - current.length;
+      const chunkSize = Math.min(96, Math.max(2, Math.ceil(remaining / 10)));
+      const next = target.slice(0, current.length + chunkSize);
+
+      visibleRef.current = next;
+      setVisibleText(next);
+      frameRef.current =
+        next === target ? null : window.requestAnimationFrame(tick);
+    };
+
+    if (frameRef.current === null) {
+      frameRef.current = window.requestAnimationFrame(tick);
+    }
+
+    return () => {
+      if (frameRef.current !== null) {
+        window.cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
+    };
+  }, [content, streaming]);
+
+  return visibleText;
 }
 
 function copyToClipboard(value: string) {
@@ -307,18 +399,26 @@ function CodeBlock({ code, language }: { code: string; language?: string }) {
 
 function MarkdownMessage({
   content,
+  charts = [],
   streaming,
 }: {
   content: string;
+  charts?: string[];
   streaming?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const stableContent = streaming ? stabilizeMarkdown(content) : content;
+  const smoothContent = useSmoothStreamingText(content, streaming);
+  const stableContent = streaming ? stabilizeMarkdown(smoothContent) : smoothContent;
   const isLong = stableContent.length > LONG_MESSAGE_LIMIT;
   const visibleContent =
     isLong && !expanded
       ? `${stableContent.slice(0, LONG_MESSAGE_LIMIT).trimEnd()}\n\n...`
       : stableContent;
+  const hasCharts = charts.length > 0;
+  const { beforeCharts, afterCharts } = useMemo(
+    () => splitMarkdownForInlineCharts(visibleContent),
+    [visibleContent]
+  );
 
   const components = useMemo<Components>(
     () => ({
@@ -425,13 +525,37 @@ function MarkdownMessage({
   return (
     <div>
       <div className="min-w-0 max-w-full text-sm [overflow-wrap:anywhere]">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeHighlight]}
-          components={components}
-        >
-          {visibleContent}
-        </ReactMarkdown>
+        {hasCharts ? (
+          <>
+            {beforeCharts && (
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeHighlight]}
+                components={components}
+              >
+                {beforeCharts}
+              </ReactMarkdown>
+            )}
+            <ChartGrid charts={charts} />
+            {afterCharts && (
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeHighlight]}
+                components={components}
+              >
+                {afterCharts}
+              </ReactMarkdown>
+            )}
+          </>
+        ) : (
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeHighlight]}
+            components={components}
+          >
+            {visibleContent}
+          </ReactMarkdown>
+        )}
       </div>
 
       {isLong && (
@@ -454,19 +578,22 @@ function ChartGrid({ charts }: { charts: string[] }) {
   if (charts.length === 0) return null;
 
   return (
-    <div className="mt-4 grid gap-3 md:grid-cols-2">
+    <div className="my-5 grid gap-4 md:grid-cols-2">
       {charts.map((chart, index) => (
-        <div
+        <figure
           key={`${chart.slice(0, 24)}-${index}`}
-          className="overflow-hidden rounded-xl border border-[#2f3a33] bg-[#101611] p-2 shadow-sm"
+          className="overflow-hidden rounded-xl border border-[#2f3a33] bg-[#101611] shadow-sm"
         >
           {/* eslint-disable-next-line @next/next/no-img-element -- Charts arrive as runtime base64 PNGs from E2B, not static/image-loader assets. */}
           <img
             src={`data:image/png;base64,${chart}`}
             alt={`График ${index + 1}`}
-            className="w-full rounded-lg"
+            className="w-full bg-[#0b0f0d]"
           />
-        </div>
+          <figcaption className="border-t border-[#26302a] px-3 py-2 text-xs text-[#8fa197]">
+            График {index + 1}
+          </figcaption>
+        </figure>
       ))}
     </div>
   );
@@ -544,8 +671,13 @@ function ChatMessage({
         </div>
         <div className="min-w-0 flex-1">
           <div className="min-w-0 rounded-2xl rounded-tl-md border border-[#2f3a33] bg-[#151a17] px-4 py-3 text-[#dbeee4] shadow-[0_16px_40px_rgba(0,0,0,0.18)] [overflow-wrap:anywhere]">
-            {content && <MarkdownMessage content={content} streaming={isStreaming} />}
-            <ChartGrid charts={charts} />
+            {(content || charts.length > 0) && (
+              <MarkdownMessage
+                content={content}
+                charts={charts}
+                streaming={isStreaming}
+              />
+            )}
           </div>
           <AssistantActions content={content} onRepeat={onRepeat} />
         </div>
