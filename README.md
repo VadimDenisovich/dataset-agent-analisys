@@ -1,10 +1,10 @@
-# Dataset Agent — Интеллектуальный анализ данных
+# Dataset Agent 
 
-Веб-приложение для анализа датасетов с использованием ИИ-агента на базе **GitHub Models** и облачного интерпретатора **E2B Code Interpreter**.
+Веб-приложение для анализа датасетов с использованием ИИ-агента на базе **GitHub Models** (gpt 4.1 и deepseek v3) и облачного интерпретатора **E2B Code Interpreter** (https://e2b.dev/).
 
 ## Стэк технологий
 
-- **Frontend**: Next.js 15 (App Router), React, TailwindCSS, shadcn/ui
+- **Frontend**: Next.js 15, React, TailwindCSS, shadcn/ui
 - **AI**: Vercel AI SDK + GitHub Models
 - **Безопасность**: детерминированный prompt-injection firewall
 - **Code Execution**: E2B Code Interpreter (облачная Python-песочница)
@@ -47,7 +47,7 @@ docker compose up -d --build
 
 ### GitHub Actions
 
-При пуше в `main` автоматически деплоится на production-сервер в `/docker/dataset-agent-analisys`.
+При пуше в `main` автоматически деплоится на прод. Сервер развернул у себя дома, Ubuntu 24ая. 
 
 **Необходимые GitHub Secrets:**
 - `SSH_PRIVATE_KEY` — приватный SSH ключ
